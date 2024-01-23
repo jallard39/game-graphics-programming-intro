@@ -21,9 +21,17 @@ public:
 
 private:
 
+	// UI variables
+	float bgColor[4] = { 0.4f, 0.6f, 0.75f, 1.0f };
+	bool showDemoUI = false;
+	bool thisBox = false;
+	bool thatBox = false;
+
 	// Initialization helper methods - feel free to customize, combine, remove, etc.
 	void LoadShaders(); 
 	void CreateGeometry();
+	void UpdateImGui(float deltaTime, float totalTime);
+	void BuildUI();
 
 	// Note the usage of ComPtr below
 	//  - This is a smart pointer for objects that abide by the
