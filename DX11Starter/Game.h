@@ -1,8 +1,11 @@
 #pragma once
 
 #include "DXCore.h"
+#include "Mesh.h"
 #include <DirectXMath.h>
 #include <wrl/client.h> // Used for ComPtr - a smart pointer for COM objects
+#include <memory>
+#include <vector>
 
 class Game 
 	: public DXCore
@@ -26,6 +29,8 @@ private:
 	bool showDemoUI = false;
 	bool thisBox = false;
 	bool thatBox = false;
+
+	std::vector<std::shared_ptr<Mesh>> meshes;
 
 	// Initialization helper methods - feel free to customize, combine, remove, etc.
 	void LoadShaders(); 
