@@ -4,6 +4,7 @@
 #include "PathHelpers.h"
 #include "Mesh.h"
 #include <vector>
+#include "BufferStructs.h"
 
 #include "ImGui/imgui.h"
 #include "ImGui/imgui_impl_dx11.h"
@@ -88,21 +89,32 @@ void Game::Init()
 	//  - Some of these, like the primitive topology & input layout, probably won't change
 	//  - Others, like setting shaders, will need to be moved elsewhere later
 	{
-		// Tell the input assembler (IA) stage of the pipeline what kind of
-		// geometric primitives (points, lines or triangles) we want to draw.  
-		// Essentially: "What kind of shape should the GPU draw with our vertices?"
+		// Tell the input assembler (IA) what kind of geometric primitives we want to draw. 
 		context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
 
-		// Ensure the pipeline knows how to interpret all the numbers stored in
-		// the vertex buffer. For this course, all of your vertices will probably
-		// have the same layout, so we can just set this once at startup.
+		// Ensure the pipeline knows how to interpret all the numbers stored in the vertex buffer
 		context->IASetInputLayout(inputLayout.Get());
 
 		// Set the active vertex and pixel shaders
-		//  - Once you start applying different shaders to different objects,
-		//    these calls will need to happen multiple times per frame
 		context->VSSetShader(vertexShader.Get(), 0, 0);
 		context->PSSetShader(pixelShader.Get(), 0, 0);
+
+		// Create a constant buffer in GPU memory
+		// First calculate size dynamically
+		unsigned int size = sizeof(VertexShaderData);
+		size = (size + 15) / 16 * 16;
+
+		// Describe the constant buffer
+		D3D11_BUFFER_DESC cbDesc = {};
+		cbDesc.BindFlags = D3D11_BIND_CONSTANT_BUFFER;
+		cbDesc.ByteWidth = size;
+		cbDesc.CPUAccessFlags = D3D11_CPU_ACCESS_WRITE;
+		cbDesc.Usage = D3D11_USAGE_DYNAMIC;
+
+		device->CreateBuffer(&cbDesc, 0, vsConstantBuffer.GetAddressOf());
+
+		// Bind the constant buffer to the pipeline
+		context->VSSetConstantBuffers(0, 1, vsConstantBuffer.GetAddressOf());
 	}
 }
 
@@ -326,6 +338,27 @@ void Game::BuildUI()
 	}
 
 	// --------------------------------------------
+	// VERTEX SHADER - parameters for vertex shader
+	// --------------------------------------------
+	if (ImGui::TreeNode("Vertex Shader"))
+	{
+		float fColorTint[4] = { colorTint.x, colorTint.y, colorTint.z, colorTint.w };
+		ImGui::ColorEdit4("Color Tint", fColorTint);
+		colorTint.x = fColorTint[0];
+		colorTint.y = fColorTint[1];
+		colorTint.z = fColorTint[2];
+		colorTint.w = fColorTint[3];
+
+		float fOffset[3] = { offset.x, offset.y, offset.z };
+		ImGui::DragFloat3("Offset", fOffset, 0.01f);
+		offset.x = fOffset[0];
+		offset.y = fOffset[1];
+		offset.z = fOffset[2];
+
+		ImGui::TreePop();
+	}
+
+	// --------------------------------------------
 	// EXTRA FEATURES - test UI from Assignment #2
 	// --------------------------------------------
 	if (ImGui::TreeNode("Other Test UI Elements"))
@@ -409,12 +442,13 @@ void Game::BuildUI()
 // --------------------------------------------------------
 void Game::Update(float deltaTime, float totalTime)
 {
-	UpdateImGui(deltaTime, totalTime);
-	BuildUI();
-
 	// Example input checking: Quit if the escape key is pressed
 	if (Input::GetInstance().KeyDown(VK_ESCAPE))
 		Quit();
+
+	// Refresh UI
+	UpdateImGui(deltaTime, totalTime);
+	BuildUI();
 }
 
 // --------------------------------------------------------
@@ -436,6 +470,18 @@ void Game::Draw(float deltaTime, float totalTime)
 	// ----------------------------------
 	// Draw Geometry
 	// ----------------------------------
+	// Get local data for VS Shader
+	VertexShaderData vsData;
+	vsData.colorTint = colorTint;
+	vsData.offset = offset;
+
+	// Map constant buffer
+	D3D11_MAPPED_SUBRESOURCE mappedBuffer = {};
+	context->Map(vsConstantBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedBuffer);
+	memcpy(mappedBuffer.pData, &vsData, sizeof(vsData));
+	context->Unmap(vsConstantBuffer.Get(), 0);
+
+	// Call draw for each mesh
 	for (int i = 0; i < meshes.size(); i++) 
 	{
 		meshes[i]->Draw();

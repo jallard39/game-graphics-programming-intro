@@ -27,6 +27,8 @@ private:
 	// UI variables
 	float bgColor[4] = { 0.4f, 0.6f, 0.75f, 1.0f };
 	bool showDemoUI = false;
+	DirectX::XMFLOAT4 colorTint = { 1.0f, 0.5f, 0.5f, 1.0f };
+	DirectX::XMFLOAT3 offset = { 0.25f, 0.0f, 0.0f };
 	bool thisBox = false;
 	bool thatBox = false;
 
@@ -46,6 +48,7 @@ private:
 	// Buffers to hold actual geometry data
 	Microsoft::WRL::ComPtr<ID3D11Buffer> vertexBuffer;
 	Microsoft::WRL::ComPtr<ID3D11Buffer> indexBuffer;
+	Microsoft::WRL::ComPtr<ID3D11Buffer> vsConstantBuffer;
 	
 	// Shaders and shader-related constructs
 	Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader;
