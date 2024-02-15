@@ -5,6 +5,8 @@
 #include "Mesh.h"
 #include <vector>
 #include "BufferStructs.h"
+#include <math.h>
+#include <string>
 
 #include "ImGui/imgui.h"
 #include "ImGui/imgui_impl_dx11.h"
@@ -73,6 +75,7 @@ void Game::Init()
 	//  - You'll be expanding and/or replacing these later
 	LoadShaders();
 	CreateGeometry();
+	CreateEntities();
 
 	// Initialize ImGui itself & platform/renderer backends
 	IMGUI_CHECKVERSION();
@@ -225,16 +228,16 @@ void Game::CreateGeometry()
 	// Star
 	Vertex vertices2[] =
 	{
-		{ XMFLOAT3(-0.5f, +0.6f, +0.0f), yellow},
-		{ XMFLOAT3(-0.7f, +0.5f, +0.0f), yellow},
-		{ XMFLOAT3(-0.6f, +0.7f, +0.0f), yellow},
-		{ XMFLOAT3(-0.75f, +0.8f, +0.0f), yellow},
-		{ XMFLOAT3(-0.55f, +0.8f, +0.0f), yellow},
-		{ XMFLOAT3(-0.5f, +0.9f, +0.0f), yellow},
-		{ XMFLOAT3(-0.45f, +0.8f, +0.0f), yellow},
-		{ XMFLOAT3(-0.25f, +0.8f, +0.0f), yellow},
-		{ XMFLOAT3(-0.4f, +0.7f, +0.0f), yellow},
-		{ XMFLOAT3(-0.3f, +0.5f, +0.0f), yellow}
+		{ XMFLOAT3(+0.0f, -0.1f, +0.0f), yellow},
+		{ XMFLOAT3(-0.2f, -0.2f, +0.0f), yellow},
+		{ XMFLOAT3(-0.1f, +0.0f, +0.0f), yellow},
+		{ XMFLOAT3(-0.25f, +0.1f, +0.0f), yellow},
+		{ XMFLOAT3(-0.05f, +0.1f, +0.0f), yellow},
+		{ XMFLOAT3(+0.0f, +0.2f, +0.0f), yellow},
+		{ XMFLOAT3(+0.05f, +0.1f, +0.0f), yellow},
+		{ XMFLOAT3(+0.25f, +0.1f, +0.0f), yellow},
+		{ XMFLOAT3(+0.1f, +0.0f, +0.0f), yellow},
+		{ XMFLOAT3(+0.2f, -0.2f, +0.0f), yellow}
 	};
 	unsigned int indices2[] = { 0, 1, 5, 2, 3, 4, 5, 9, 0, 6, 7, 8 };
 	meshes.push_back(std::make_shared<Mesh>("Star", vertices2, 10, indices2, 12, device, context));
@@ -242,10 +245,10 @@ void Game::CreateGeometry()
 	// Small green rectangle
 	Vertex vertices3[] =
 	{
-		{ XMFLOAT3(+0.45f, -0.4f, +0.0f), green },
-		{ XMFLOAT3(+0.65f, -0.4f, +0.0f), green },
-		{ XMFLOAT3(+0.65f, -0.7f, +0.0f), green },
-		{ XMFLOAT3(+0.45f, -0.7f, +0.0f), green }
+		{ XMFLOAT3(-0.1f, +0.15f, +0.0f), green },
+		{ XMFLOAT3(+0.1f, +0.15f, +0.0f), green },
+		{ XMFLOAT3(+0.1f, -0.15f, +0.0f), green },
+		{ XMFLOAT3(-0.1f, -0.15f, +0.0f), green }
 	};
 	unsigned int indices3[] = { 0, 1, 2, 2, 3, 0 };
 	meshes.push_back(std::make_shared<Mesh>("Rectangle", vertices3, 4, indices3, 6, device, context));
@@ -253,9 +256,9 @@ void Game::CreateGeometry()
 	// Small Triangle
 	Vertex vertices4[] =
 	{
-		{ XMFLOAT3(+0.0f, +0.8f, +0.0f), red },
-		{ XMFLOAT3(+0.5f, +0.3f, +0.0f), blue },
-		{ XMFLOAT3(-0.5f, +0.3f, +0.0f), green }
+		{ XMFLOAT3(+0.0f, +0.25f, +0.0f), red },
+		{ XMFLOAT3(+0.5f, -0.25f, +0.0f), blue },
+		{ XMFLOAT3(-0.5f, -0.25f, +0.0f), green }
 	};
 	unsigned int indices4[] = { 0, 1, 2 };
 
@@ -268,6 +271,29 @@ void Game::CreateGeometry()
 		device,
 		context
 	));
+}
+
+
+// --------------------------------------------------------
+// Creates the GameEntities that will be drawn to the screen
+// --------------------------------------------------------
+void Game::CreateEntities() 
+{
+	entities.push_back(new GameEntity(meshes[1]));
+	entities[0]->GetTransform()->SetPosition(0.5f, 0.5f, 0.0f);
+	entities[0]->GetTransform()->SetScale(0.5f, 0.7f, 1.0f);
+
+	entities.push_back(new GameEntity(meshes[1]));
+	entities[1]->GetTransform()->SetPosition(-0.7f, -0.2f, 0.0f);
+
+	entities.push_back(new GameEntity(meshes[3]));
+	entities[2]->GetTransform()->SetPosition(-0.3f, +0.6f, 0.0f);
+	entities[2]->GetTransform()->SetScale(0.5f, 1.0f, 0.0f);
+
+	entities.push_back(new GameEntity(meshes[2]));
+	entities[3]->GetTransform()->SetPosition(+0.2f, -0.5f, 0.0f);
+
+	entities.push_back(new GameEntity(meshes[0]));
 }
 
 
@@ -338,26 +364,52 @@ void Game::BuildUI()
 	}
 
 	// --------------------------------------------
-	// VERTEX SHADER - parameters for vertex shader
+	// SCENE ENTITIES - entity data
 	// --------------------------------------------
-	if (ImGui::TreeNode("Vertex Shader"))
+	
+	if (ImGui::TreeNode("Scene Entities"))
 	{
-		float fColorTint[4] = { colorTint.x, colorTint.y, colorTint.z, colorTint.w };
-		ImGui::ColorEdit4("Color Tint", fColorTint);
-		colorTint.x = fColorTint[0];
-		colorTint.y = fColorTint[1];
-		colorTint.z = fColorTint[2];
-		colorTint.w = fColorTint[3];
+		for (int i = 0; i < entities.size(); i++)
+		{
+			std::string title = "Entity ";
+			title.append(std::to_string(i)).append(" (").append(entities[i]->GetMesh()->GetName()).append(")");
+			if (ImGui::TreeNode(title.c_str()))
+			{
+				float entPos[3] = {
+					entities[i]->GetTransform()->GetPosition().x,
+					entities[i]->GetTransform()->GetPosition().y,
+					entities[i]->GetTransform()->GetPosition().z,
+				};
+				ImGui::DragFloat3("Position", entPos, 0.01f);
+				entities[i]->GetTransform()->SetPosition(entPos[0], entPos[1], entPos[2]);
 
-		float fOffset[3] = { offset.x, offset.y, offset.z };
-		ImGui::DragFloat3("Offset", fOffset, 0.01f);
-		offset.x = fOffset[0];
-		offset.y = fOffset[1];
-		offset.z = fOffset[2];
+				float entRot[3] = {
+					entities[i]->GetTransform()->GetPitchYawRoll().x,
+					entities[i]->GetTransform()->GetPitchYawRoll().y,
+					entities[i]->GetTransform()->GetPitchYawRoll().z,
+				};
+				ImGui::DragFloat3("Rotation", entRot, 0.01f);
+				entities[i]->GetTransform()->SetRotation(entRot[0], entRot[1], entRot[2]);
+
+				float entScl[3] = {
+					entities[i]->GetTransform()->GetScale().x,
+					entities[i]->GetTransform()->GetScale().y,
+					entities[i]->GetTransform()->GetScale().z,
+				};
+				ImGui::DragFloat3("Scale", entScl, 0.01f);
+				entities[i]->GetTransform()->SetScale(entScl[0], entScl[1], entScl[2]);
+
+				ImGui::Text("Mesh Index Count: %d", entities[i]->GetMesh()->GetIndexCount());
+				ImGui::Spacing();
+
+				ImGui::TreePop();
+			}
+		}
 
 		ImGui::TreePop();
 	}
-
+	
+	/*
 	// --------------------------------------------
 	// EXTRA FEATURES - test UI from Assignment #2
 	// --------------------------------------------
@@ -433,6 +485,7 @@ void Game::BuildUI()
 
 		ImGui::TreePop();
 	}
+	*/
 
 	ImGui::End();
 }
@@ -445,6 +498,14 @@ void Game::Update(float deltaTime, float totalTime)
 	// Example input checking: Quit if the escape key is pressed
 	if (Input::GetInstance().KeyDown(VK_ESCAPE))
 		Quit();
+
+	// Update entities
+	entities[0]->GetTransform()->Rotate(0.0f, 0.0f, 3.0f * deltaTime);
+	entities[0]->GetTransform()->Scale(1.0f + 0.0005f * sinf(3.0f*totalTime), 1.0f + 0.0005f * sinf(3.0f*totalTime), 1.0f);
+	entities[2]->GetTransform()->Rotate(0.0f, 0.0f, -1.0f * deltaTime);
+	entities[3]->GetTransform()->MoveAbsolute(0.0003f*sinf(totalTime), 0.0f, 0.0f);
+	entities[4]->GetTransform()->Scale(1.0f + 0.0001f * sinf(0.7f*totalTime),  1.0f + 0.0001f * sinf(0.7f*totalTime), 1.0f);
+	entities[1]->GetTransform()->MoveAbsolute(0.03f * deltaTime, 0.01f * deltaTime, 0.0f);
 
 	// Refresh UI
 	UpdateImGui(deltaTime, totalTime);
@@ -470,21 +531,11 @@ void Game::Draw(float deltaTime, float totalTime)
 	// ----------------------------------
 	// Draw Geometry
 	// ----------------------------------
-	// Get local data for VS Shader
-	VertexShaderData vsData;
-	vsData.colorTint = colorTint;
-	vsData.offset = offset;
 
-	// Map constant buffer
-	D3D11_MAPPED_SUBRESOURCE mappedBuffer = {};
-	context->Map(vsConstantBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedBuffer);
-	memcpy(mappedBuffer.pData, &vsData, sizeof(vsData));
-	context->Unmap(vsConstantBuffer.Get(), 0);
-
-	// Call draw for each mesh
-	for (int i = 0; i < meshes.size(); i++) 
+	// Call draw for each game entity
+	for (int i = 0; i < entities.size(); i++) 
 	{
-		meshes[i]->Draw();
+		entities[i]->Draw(context, vsConstantBuffer);
 	}
 
 	// ----------------------------------

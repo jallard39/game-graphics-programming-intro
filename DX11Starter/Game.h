@@ -6,6 +6,7 @@
 #include <wrl/client.h> // Used for ComPtr - a smart pointer for COM objects
 #include <memory>
 #include <vector>
+#include "GameEntity.h"
 
 class Game 
 	: public DXCore
@@ -27,16 +28,16 @@ private:
 	// UI variables
 	float bgColor[4] = { 0.4f, 0.6f, 0.75f, 1.0f };
 	bool showDemoUI = false;
-	DirectX::XMFLOAT4 colorTint = { 1.0f, 0.5f, 0.5f, 1.0f };
-	DirectX::XMFLOAT3 offset = { 0.25f, 0.0f, 0.0f };
 	bool thisBox = false;
 	bool thatBox = false;
 
 	std::vector<std::shared_ptr<Mesh>> meshes;
+	std::vector<GameEntity*> entities;
 
 	// Initialization helper methods - feel free to customize, combine, remove, etc.
 	void LoadShaders(); 
 	void CreateGeometry();
+	void CreateEntities();
 	void UpdateImGui(float deltaTime, float totalTime);
 	void BuildUI();
 
