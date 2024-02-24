@@ -434,7 +434,7 @@ void Game::BuildUI()
 		ImGui::SameLine(0.0f, 10.0f);
 		if (ImGui::ArrowButton("##left", ImGuiDir_Left)) { 
 			activeCameraIndex--; 
-			if (activeCameraIndex <= -1) activeCameraIndex = cameras.size() - 1;
+			if (activeCameraIndex <= -1) activeCameraIndex = (int)cameras.size() - 1;
 		}
 		ImGui::SameLine(0.0f, 10.0f);
 		ImGui::Text("Camera %d", activeCameraIndex + 1);
