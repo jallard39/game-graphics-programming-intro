@@ -77,6 +77,20 @@ void Game::Init()
 	CreateGeometry();
 	CreateEntities();
 
+	// Initialize camera field
+	DirectX::XMFLOAT3 camInitPos = { 0.0f, 0.0f, -1.5f };
+	cameras.push_back(std::make_shared<Camera>((float)this->windowWidth / this->windowHeight, camInitPos));
+
+	camInitPos = { -0.6f, -0.4f, -0.4f };
+	DirectX::XMFLOAT3 camInitRot = { -0.5f, 0.75f, 0.0f };
+	cameras.push_back(std::make_shared<Camera>(
+		(float)this->windowWidth / this->windowHeight,
+		camInitPos,
+		camInitRot,
+		XM_PIDIV2
+	));
+	activeCameraIndex = 0;
+
 	// Initialize ImGui itself & platform/renderer backends
 	IMGUI_CHECKVERSION();
 	ImGui::CreateContext();
@@ -88,9 +102,6 @@ void Game::Init()
 	//ImGui::StyleColorsClassic();
 	
 	// Set initial graphics API state
-	//  - These settings persist until we change them
-	//  - Some of these, like the primitive topology & input layout, probably won't change
-	//  - Others, like setting shaders, will need to be moved elsewhere later
 	{
 		// Tell the input assembler (IA) what kind of geometric primitives we want to draw. 
 		context->IASetPrimitiveTopology(D3D11_PRIMITIVE_TOPOLOGY_TRIANGLELIST);
@@ -306,6 +317,10 @@ void Game::OnResize()
 {
 	// Handle base-level DX resize stuff
 	DXCore::OnResize();
+
+	for (int i = 0; i < cameras.size(); i++) {
+		cameras[i]->UpdateProjectionMatrix((float)this->windowWidth / this->windowHeight);
+	}
 }
 
 void Game::UpdateImGui(float deltaTime, float totalTime) 
@@ -408,7 +423,38 @@ void Game::BuildUI()
 
 		ImGui::TreePop();
 	}
+
+	// --------------------------------------------
+	// CAMERA - camera data
+	// --------------------------------------------
 	
+	if (ImGui::TreeNode("Camera")) 
+	{
+		ImGui::Text("Active Camera: ");
+		ImGui::SameLine(0.0f, 10.0f);
+		if (ImGui::ArrowButton("##left", ImGuiDir_Left)) { 
+			activeCameraIndex--; 
+			if (activeCameraIndex <= -1) activeCameraIndex = cameras.size() - 1;
+		}
+		ImGui::SameLine(0.0f, 10.0f);
+		ImGui::Text("Camera %d", activeCameraIndex + 1);
+		ImGui::SameLine(0.0f, 10.0f);
+		if (ImGui::ArrowButton("##right", ImGuiDir_Right)) { 
+			activeCameraIndex++; 
+			if (activeCameraIndex >= cameras.size()) activeCameraIndex = 0;
+		}
+		ImGui::SameLine(0.0f, 20.0f);
+		
+		std::shared_ptr<Camera> camera = cameras[activeCameraIndex];
+		DirectX::XMFLOAT3 camPos = camera->GetTransform()->GetPosition();
+		DirectX::XMFLOAT3 camForward = camera->GetTransform()->GetForward();
+		ImGui::Text("FOV: %6.2f", camera->GetFOV());
+		ImGui::Text("Camera Position:       %6.2f  %6.2f  %6.2f", camPos.x, camPos.y, camPos.z);
+		ImGui::Text("Camera Forward Vector: %6.2f  %6.2f  %6.2f", camForward.x, camForward.y, camForward.z);
+
+		ImGui::TreePop();
+	}
+
 	/*
 	// --------------------------------------------
 	// EXTRA FEATURES - test UI from Assignment #2
@@ -507,6 +553,9 @@ void Game::Update(float deltaTime, float totalTime)
 	entities[4]->GetTransform()->Scale(1.0f + 0.0001f * sinf(0.7f*totalTime),  1.0f + 0.0001f * sinf(0.7f*totalTime), 1.0f);
 	entities[1]->GetTransform()->MoveAbsolute(0.03f * deltaTime, 0.01f * deltaTime, 0.0f);
 
+	// Update camera
+	cameras[activeCameraIndex]->Update(deltaTime);
+
 	// Refresh UI
 	UpdateImGui(deltaTime, totalTime);
 	BuildUI();
@@ -535,7 +584,7 @@ void Game::Draw(float deltaTime, float totalTime)
 	// Call draw for each game entity
 	for (int i = 0; i < entities.size(); i++) 
 	{
-		entities[i]->Draw(context, vsConstantBuffer);
+		entities[i]->Draw(context, vsConstantBuffer, cameras[activeCameraIndex]);
 	}
 
 	// ----------------------------------

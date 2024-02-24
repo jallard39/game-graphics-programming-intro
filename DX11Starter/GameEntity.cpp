@@ -41,14 +41,20 @@ void GameEntity::SetColorTint(float r, float g, float b, float a)
 
 void GameEntity::Draw(
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, 
-	Microsoft::WRL::ComPtr<ID3D11Buffer> vsConstantBuffer
+	Microsoft::WRL::ComPtr<ID3D11Buffer> vsConstantBuffer,
+	std::shared_ptr<Camera> camera
 	)
 {
 	// Collect data for current entity and store in a struct
 	VertexShaderData vsData;
 	vsData.colorTint = colorTint;
 	DirectX::XMFLOAT4X4 worldMat = transform->GetWorldMatrix();
+	DirectX::XMFLOAT4X4 viewMat = camera->GetViewMatrix();
+	DirectX::XMFLOAT4X4 projMat = camera->GetProjectionMatrix();
+
 	vsData.world = DirectX::XMLoadFloat4x4(&worldMat);
+	vsData.view = DirectX::XMLoadFloat4x4(&viewMat);
+	vsData.projection = DirectX::XMLoadFloat4x4(&projMat);
 
 	// Map / Memcpy / Unmap Constant Buffer resource
 	D3D11_MAPPED_SUBRESOURCE mappedBuffer = {};

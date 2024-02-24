@@ -7,6 +7,7 @@
 #include <memory>
 #include <vector>
 #include "GameEntity.h"
+#include "Camera.h"
 
 class Game 
 	: public DXCore
@@ -33,6 +34,8 @@ private:
 
 	std::vector<std::shared_ptr<Mesh>> meshes;
 	std::vector<GameEntity*> entities;
+	std::vector<std::shared_ptr<Camera>> cameras;
+	int activeCameraIndex = 0;
 
 	// Initialization helper methods - feel free to customize, combine, remove, etc.
 	void LoadShaders(); 

@@ -6,4 +6,6 @@ struct VertexShaderData
 {
 	DirectX::XMFLOAT4 colorTint;
 	DirectX::XMMATRIX world;
+	DirectX::XMMATRIX view;
+	DirectX::XMMATRIX projection;
 };
