@@ -33,7 +33,7 @@ private:
 	bool thatBox = false;
 
 	std::vector<std::shared_ptr<Mesh>> meshes;
-	std::vector<GameEntity*> entities;
+	std::vector<std::shared_ptr<GameEntity>> entities;
 	std::vector<std::shared_ptr<Camera>> cameras;
 	int activeCameraIndex = 0;
 

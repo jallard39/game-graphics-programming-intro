@@ -290,21 +290,21 @@ void Game::CreateGeometry()
 // --------------------------------------------------------
 void Game::CreateEntities() 
 {
-	entities.push_back(new GameEntity(meshes[1]));
+	entities.push_back(std::make_shared<GameEntity>(meshes[1]));
 	entities[0]->GetTransform()->SetPosition(0.5f, 0.5f, 0.0f);
 	entities[0]->GetTransform()->SetScale(0.5f, 0.7f, 1.0f);
 
-	entities.push_back(new GameEntity(meshes[1]));
+	entities.push_back(std::make_shared<GameEntity>(meshes[1]));
 	entities[1]->GetTransform()->SetPosition(-0.7f, -0.2f, 0.0f);
 
-	entities.push_back(new GameEntity(meshes[3]));
+	entities.push_back(std::make_shared<GameEntity>(meshes[3]));
 	entities[2]->GetTransform()->SetPosition(-0.3f, +0.6f, 0.0f);
 	entities[2]->GetTransform()->SetScale(0.5f, 1.0f, 0.0f);
 
-	entities.push_back(new GameEntity(meshes[2]));
+	entities.push_back(std::make_shared<GameEntity>(meshes[2]));
 	entities[3]->GetTransform()->SetPosition(+0.2f, -0.5f, 0.0f);
 
-	entities.push_back(new GameEntity(meshes[0]));
+	entities.push_back(std::make_shared<GameEntity>(meshes[0]));
 }
 
 
