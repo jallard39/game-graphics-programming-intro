@@ -1,10 +1,10 @@
 #include "GameEntity.h"
 #include <d3d11.h>
 #include <wrl/client.h>
-#include "BufferStructs.h"
 
-GameEntity::GameEntity(std::shared_ptr<Mesh> mesh) :
-	mesh(mesh)
+GameEntity::GameEntity(std::shared_ptr<Mesh> mesh, std::shared_ptr<Material> material) :
+	mesh(mesh),
+	material(material)
 {
 	transform = std::make_shared<Transform>();
 }
@@ -24,9 +24,19 @@ std::shared_ptr<Transform> GameEntity::GetTransform()
 	return transform;
 }
 
+std::shared_ptr<Material> GameEntity::GetMaterial()
+{
+	return material;
+}
+
 DirectX::XMFLOAT4 GameEntity::GetColorTint()
 {
 	return colorTint;
+}
+
+void GameEntity::SetMaterial(std::shared_ptr<Material> material)
+{
+	this->material = material;
 }
 
 void GameEntity::SetColorTint(DirectX::XMFLOAT4 color)
@@ -41,26 +51,23 @@ void GameEntity::SetColorTint(float r, float g, float b, float a)
 
 void GameEntity::Draw(
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, 
-	Microsoft::WRL::ComPtr<ID3D11Buffer> vsConstantBuffer,
 	std::shared_ptr<Camera> camera
 	)
 {
-	// Collect data for current entity and store in a struct
-	VertexShaderData vsData;
-	vsData.colorTint = colorTint;
-	DirectX::XMFLOAT4X4 worldMat = transform->GetWorldMatrix();
-	DirectX::XMFLOAT4X4 viewMat = camera->GetViewMatrix();
-	DirectX::XMFLOAT4X4 projMat = camera->GetProjectionMatrix();
+	// Set shaders
+	material->GetVertexShader()->SetShader();
+	material->GetPixelShader()->SetShader();
 
-	vsData.world = DirectX::XMLoadFloat4x4(&worldMat);
-	vsData.view = DirectX::XMLoadFloat4x4(&viewMat);
-	vsData.projection = DirectX::XMLoadFloat4x4(&projMat);
+	// Set up data for vertex shader
+	std::shared_ptr<SimpleVertexShader> vs = material->GetVertexShader();
 
-	// Map / Memcpy / Unmap Constant Buffer resource
-	D3D11_MAPPED_SUBRESOURCE mappedBuffer = {};
-	context->Map(vsConstantBuffer.Get(), 0, D3D11_MAP_WRITE_DISCARD, 0, &mappedBuffer);
-	memcpy(mappedBuffer.pData, &vsData, sizeof(vsData));
-	context->Unmap(vsConstantBuffer.Get(), 0);
+	vs->SetFloat4("colorTint", material->GetColorTint());
+	vs->SetMatrix4x4("world", transform->GetWorldMatrix());
+	vs->SetMatrix4x4("view", camera->GetViewMatrix());
+	vs->SetMatrix4x4("projection", camera->GetProjectionMatrix());
+
+	// Map/MemCopy/Unmap
+	vs->CopyAllBufferData();
 
 	// Set vertex & index buffers and render
 	mesh->Draw();

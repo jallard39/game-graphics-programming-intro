@@ -18,6 +18,12 @@ public:
 		Microsoft::WRL::ComPtr<ID3D11Device> device,
 		Microsoft::WRL::ComPtr<ID3D11DeviceContext>	context
 	);
+	Mesh(
+		std::string name,
+		const wchar_t* filename,
+		Microsoft::WRL::ComPtr<ID3D11Device> device,
+		Microsoft::WRL::ComPtr<ID3D11DeviceContext>	context
+	);
 	~Mesh();
 
 	Microsoft::WRL::ComPtr<ID3D11Buffer> GetVertexBuffer();
@@ -36,4 +42,12 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11Buffer> indexBuffer;
 
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext>	context;
+
+	void CreateBuffers(
+		const void* vertices, 
+		int numVertices, 
+		const void* indices, 
+		int numIndices, 
+		Microsoft::WRL::ComPtr<ID3D11Device> device
+	);
 };

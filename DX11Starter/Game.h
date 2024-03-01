@@ -8,6 +8,8 @@
 #include <vector>
 #include "GameEntity.h"
 #include "Camera.h"
+#include "SimpleShader.h"
+#include "Material.h"
 
 class Game 
 	: public DXCore
@@ -33,6 +35,7 @@ private:
 	bool thatBox = false;
 
 	std::vector<std::shared_ptr<Mesh>> meshes;
+	std::vector<std::shared_ptr<Material>> materials;
 	std::vector<std::shared_ptr<GameEntity>> entities;
 	std::vector<std::shared_ptr<Camera>> cameras;
 	int activeCameraIndex = 0;
@@ -41,6 +44,8 @@ private:
 	void LoadShaders(); 
 	void CreateGeometry();
 	void CreateEntities();
+	void CreateCameras();
+	void LoadMaterials();
 	void UpdateImGui(float deltaTime, float totalTime);
 	void BuildUI();
 
@@ -52,12 +57,10 @@ private:
 	// Buffers to hold actual geometry data
 	Microsoft::WRL::ComPtr<ID3D11Buffer> vertexBuffer;
 	Microsoft::WRL::ComPtr<ID3D11Buffer> indexBuffer;
-	Microsoft::WRL::ComPtr<ID3D11Buffer> vsConstantBuffer;
 	
 	// Shaders and shader-related constructs
-	Microsoft::WRL::ComPtr<ID3D11PixelShader> pixelShader;
-	Microsoft::WRL::ComPtr<ID3D11VertexShader> vertexShader;
-	Microsoft::WRL::ComPtr<ID3D11InputLayout> inputLayout;
+	std::shared_ptr<SimpleVertexShader> vertexShader;
+	std::shared_ptr<SimplePixelShader> pixelShader;
 
 };
 
