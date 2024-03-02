@@ -24,7 +24,8 @@ public:
 
 	void Draw(
 		Microsoft::WRL::ComPtr<ID3D11DeviceContext> context,
-		std::shared_ptr<Camera> camera
+		std::shared_ptr<Camera> camera,
+		float totalTime
 	);
 
 private:

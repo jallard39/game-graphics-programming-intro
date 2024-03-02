@@ -104,6 +104,7 @@ void Game::LoadShaders()
 {
 	vertexShader = std::make_shared<SimpleVertexShader>(device, context, FixPath(L"VertexShader.cso").c_str());
 	pixelShader = std::make_shared<SimplePixelShader>(device, context, FixPath(L"PixelShader.cso").c_str());
+	customShaders.push_back(std::make_shared<SimplePixelShader>(device, context, FixPath(L"CustomPS.cso").c_str()));
 }
 
 
@@ -202,6 +203,7 @@ void Game::LoadMaterials()
 	materials.push_back(std::make_shared<Material>(1.0f, 0.52f, 0.52f, 1.0f, vertexShader, pixelShader));
 	materials.push_back(std::make_shared<Material>(1.0f, 0.961f, 0.22f, 1.0f, vertexShader, pixelShader));
 	materials.push_back(std::make_shared<Material>(0.608f, 0.945f, 1.0f, 1.0f, vertexShader, pixelShader));
+	materials.push_back(std::make_shared<Material>(0.145f, 0.878f, 0.365f, 1.0f, vertexShader, customShaders[0]));
 }
 
 
@@ -228,6 +230,10 @@ void Game::CreateEntities()
 
 	entities.push_back(std::make_shared<GameEntity>(meshes[4], materials[0]));
 	entities[4]->GetTransform()->SetRotation(XM_PIDIV2, 0.0f, 0.0f);
+
+	entities.push_back(std::make_shared<GameEntity>(meshes[5], materials[4]));
+	entities[5]->GetTransform()->SetPosition(-1.5f, 0.0f, -1.0f);
+	entities[5]->GetTransform()->SetScale(0.5f, 0.5f, 0.5f);
 }
 
 
@@ -534,7 +540,7 @@ void Game::Draw(float deltaTime, float totalTime)
 	// Call draw for each game entity
 	for (int i = 0; i < entities.size(); i++) 
 	{
-		entities[i]->Draw(context, cameras[activeCameraIndex]);
+		entities[i]->Draw(context, cameras[activeCameraIndex], totalTime);
 	}
 
 	// ----------------------------------

@@ -51,7 +51,8 @@ void GameEntity::SetColorTint(float r, float g, float b, float a)
 
 void GameEntity::Draw(
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext> context, 
-	std::shared_ptr<Camera> camera
+	std::shared_ptr<Camera> camera,
+	float totalTime
 	)
 {
 	// Set shaders
@@ -61,13 +62,19 @@ void GameEntity::Draw(
 	// Set up data for vertex shader
 	std::shared_ptr<SimpleVertexShader> vs = material->GetVertexShader();
 
-	vs->SetFloat4("colorTint", material->GetColorTint());
 	vs->SetMatrix4x4("world", transform->GetWorldMatrix());
 	vs->SetMatrix4x4("view", camera->GetViewMatrix());
 	vs->SetMatrix4x4("projection", camera->GetProjectionMatrix());
 
+	// Set up data for pixel shader
+	std::shared_ptr<SimplePixelShader> ps = material->GetPixelShader();
+
+	ps->SetFloat4("colorTint", material->GetColorTint());
+	ps->SetFloat("totalTime", totalTime);
+
 	// Map/MemCopy/Unmap
 	vs->CopyAllBufferData();
+	ps->CopyAllBufferData();
 
 	// Set vertex & index buffers and render
 	mesh->Draw();
