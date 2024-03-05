@@ -10,6 +10,7 @@
 #include "Camera.h"
 #include "SimpleShader.h"
 #include "Material.h"
+#include "Lights.h"
 
 class Game 
 	: public DXCore
@@ -34,25 +35,23 @@ private:
 	bool thisBox = false;
 	bool thatBox = false;
 
+	// Vectors to hold game objects
 	std::vector<std::shared_ptr<Mesh>> meshes;
 	std::vector<std::shared_ptr<Material>> materials;
 	std::vector<std::shared_ptr<GameEntity>> entities;
+	std::vector<Light> lights;
 	std::vector<std::shared_ptr<Camera>> cameras;
 	int activeCameraIndex = 0;
 
-	// Initialization helper methods - feel free to customize, combine, remove, etc.
+	// Initialization helper methods
 	void LoadShaders(); 
 	void CreateGeometry();
 	void CreateEntities();
+	void CreateLights();
 	void CreateCameras();
 	void LoadMaterials();
 	void UpdateImGui(float deltaTime, float totalTime);
 	void BuildUI();
-
-	// Note the usage of ComPtr below
-	//  - This is a smart pointer for objects that abide by the
-	//     Component Object Model, which DirectX objects do
-	//  - More info here: https://github.com/Microsoft/DirectXTK/wiki/ComPtr
 
 	// Buffers to hold actual geometry data
 	Microsoft::WRL::ComPtr<ID3D11Buffer> vertexBuffer;
@@ -62,6 +61,6 @@ private:
 	std::shared_ptr<SimpleVertexShader> vertexShader;
 	std::shared_ptr<SimplePixelShader> pixelShader;
 	std::vector<std::shared_ptr<SimplePixelShader>> customShaders;
-
+	DirectX::XMFLOAT3 ambientColor = { 0.1f, 0.1f, 0.25f };
 };
 
