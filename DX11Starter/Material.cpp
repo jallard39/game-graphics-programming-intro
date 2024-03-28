@@ -73,6 +73,26 @@ void Material::SetRoughness(float x)
 	this->roughness = x;
 }
 
+void Material::SetUVOffset(DirectX::XMFLOAT2 offset)
+{
+	uvOffset = offset;
+}
+
+void Material::SetUVOffset(float x, float y)
+{
+	uvOffset = { x, y };
+}
+
+void Material::SetUVScale(DirectX::XMFLOAT2 scale)
+{
+	uvScale = scale;
+}
+
+void Material::SetUVScale(float x, float y)
+{
+	uvScale = { x, y };
+}
+
 void Material::SetVertexShader(std::shared_ptr<SimpleVertexShader> vertexShader)
 {
 	this->vertexShader = vertexShader;
@@ -83,3 +103,24 @@ void Material::SetPixelShader(std::shared_ptr<SimplePixelShader> pixelShader)
 	this->pixelShader = pixelShader;
 }
 
+// ======================
+// Other Methods
+// ======================
+
+void Material::AddTextureSRV(std::string name, Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv)
+{
+	textureSRVs.insert({ name, srv });
+}
+
+void Material::AddSampler(std::string name, Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler)
+{
+	samplers.insert({ name, sampler });
+}
+
+void Material::PrepareMaterial()
+{
+	pixelShader->SetFloat2("uvOffset", uvOffset);
+	pixelShader->SetFloat2("uvScale", uvScale);
+	for (auto& t : textureSRVs) { pixelShader->SetShaderResourceView(t.first.c_str(), t.second); }
+	for (auto& s : samplers) { pixelShader->SetSamplerState(s.first.c_str(), s.second); }
+}

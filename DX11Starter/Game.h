@@ -30,7 +30,7 @@ public:
 private:
 
 	// UI variables
-	float bgColor[4] = { 0.4f, 0.6f, 0.75f, 1.0f };
+	float bgColor[4] = { 0.2f, 0.2f, 0.2f, 1.0f };
 	bool showDemoUI = false;
 	bool thisBox = false;
 	bool thatBox = false;

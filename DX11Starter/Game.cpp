@@ -7,6 +7,8 @@
 #include <math.h>
 #include <string>
 
+#include "WICTextureLoader.h"
+
 #include "ImGui/imgui.h"
 #include "ImGui/imgui_impl_dx11.h"
 #include "ImGui/imgui_impl_win32.h"
@@ -196,16 +198,69 @@ void Game::CreateGeometry()
 
 
 // --------------------------------------------------------
-// Create materials for our objects
+// Load textures and create materials for our objects
 // --------------------------------------------------------
 void Game::LoadMaterials()
 {
+	// Load texture images
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srvBasic;
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		FixPath(L"../../Assets/Textures/Basic/Basic_albedo.png").c_str(),
+		nullptr, srvBasic.GetAddressOf());
+
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv1;
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		FixPath(L"../../Assets/Textures/FineClumpySand_2k/FineClumpySand_albedo.png").c_str(),
+		nullptr, srv1.GetAddressOf());
+
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv2;
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		FixPath(L"../../Assets/Textures/SpaceLabWallOld_2k/SpaceLabWallOld_albedo.png").c_str(),
+		nullptr, srv2.GetAddressOf());
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv2Spec;
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		FixPath(L"../../Assets/Textures/SpaceLabWallOld_2k/SpaceLabWallOld_specular.png").c_str(),
+		nullptr, srv2Spec.GetAddressOf());
+
+	// Create sampling state
+	Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler;
+	D3D11_SAMPLER_DESC sampDesc = {};
+	sampDesc.AddressU = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressV = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.AddressW = D3D11_TEXTURE_ADDRESS_WRAP;
+	sampDesc.Filter = D3D11_FILTER_ANISOTROPIC;
+	sampDesc.MaxAnisotropy = 12;
+	sampDesc.MaxLOD = D3D11_FLOAT32_MAX;
+
+	device->CreateSamplerState(&sampDesc, sampler.GetAddressOf());
+	
+	// Create basic color materials
 	materials.push_back(std::make_shared<Material>(0.9f, 0.2f, 0.2f, 1.0f, 0.1f, vertexShader, pixelShader)); // Red
 	materials.push_back(std::make_shared<Material>(1.0f, 1.0f, 1.0f, 1.0f, 0.3f, vertexShader, pixelShader)); // White
 	materials.push_back(std::make_shared<Material>(1.0f, 0.961f, 0.22f, 1.0f, 0.5f, vertexShader, pixelShader)); // Yellow
 	materials.push_back(std::make_shared<Material>(0.608f, 0.945f, 1.0f, 1.0f, 0.7f, vertexShader, pixelShader)); // Blue
 	materials.push_back(std::make_shared<Material>(0.169f, 0.51f, 0.161f, 1.0f, 0.9f, vertexShader, pixelShader)); // Green
 	materials.push_back(std::make_shared<Material>(0.145f, 0.878f, 0.365f, 1.0f, 0.9f, vertexShader, customShaders[0])); // Rainbow
+	for (int i = 0; i < 6; i++) {
+		materials[i]->AddTextureSRV("SurfaceTexture", srvBasic);
+		materials[i]->AddSampler("BasicSampler", sampler);
+	}
+
+	// Create textured materials
+	materials.push_back(std::make_shared<Material>(1.0f, 1.0f, 1.0f, 1.0f, 0.0f, vertexShader, pixelShader)); // Fine Clumpy Sand
+	materials[6]->AddTextureSRV("SurfaceTexture", srv1);
+	materials[6]->AddSampler("BasicSampler", sampler);
+
+	materials.push_back(std::make_shared<Material>(1.0f, 1.0f, 1.0f, 1.0f, 0.0f, vertexShader, pixelShader)); // Space Lab Wall Old
+	materials[7]->AddTextureSRV("SurfaceTexture", srv2);
+	materials[7]->AddTextureSRV("SpecularMap", srv2Spec);
+	materials[7]->AddSampler("BasicSampler", sampler);
+
+	materials.push_back(std::make_shared<Material>(1.0f, 1.0f, 1.0f, 1.0f, 0.0f, vertexShader, pixelShader)); // Space Lab Scaled
+	materials[8]->AddTextureSRV("SurfaceTexture", srv2);
+	materials[8]->AddTextureSRV("SpecularMap", srv2Spec);
+	materials[8]->AddSampler("BasicSampler", sampler);
+	materials[8]->SetUVScale(10.0f, 5.0f);
 }
 
 
@@ -214,20 +269,20 @@ void Game::LoadMaterials()
 // --------------------------------------------------------
 void Game::CreateEntities() 
 {
-	entities.push_back(std::make_shared<GameEntity>(meshes[1], materials[2])); // Yellow cylinder
-	entities[0]->GetTransform()->SetPosition(2.5f, 0.5f, 1.0f);
+	entities.push_back(std::make_shared<GameEntity>(meshes[1], materials[6])); // Sand cylinder
+	entities[0]->GetTransform()->SetPosition(3.5f, 0.5f, 1.0f);
 	entities[0]->GetTransform()->SetScale(0.5f, 0.7f, 1.0f);
 
-	entities.push_back(std::make_shared<GameEntity>(meshes[5], materials[1])); // White sphere
+	entities.push_back(std::make_shared<GameEntity>(meshes[5], materials[6])); // Sand sphere
 	entities[1]->GetTransform()->SetPosition(-0.7f, -0.2f, 0.0f);
 	entities[1]->GetTransform()->SetScale(0.5f, 0.5f, 0.5f);
 
-	entities.push_back(std::make_shared<GameEntity>(meshes[6], materials[4])); // Green torus
+	entities.push_back(std::make_shared<GameEntity>(meshes[6], materials[8])); // Space wall torus
 	entities[2]->GetTransform()->SetPosition(-1.0f, +1.0f, 0.0f);
 	entities[2]->GetTransform()->SetScale(0.5f, 0.5f, 0.5f);
 
-	entities.push_back(std::make_shared<GameEntity>(meshes[0], materials[3])); // Blue cube
-	entities[3]->GetTransform()->SetPosition(+0.2f, -0.5f, 0.0f);
+	entities.push_back(std::make_shared<GameEntity>(meshes[0], materials[7])); // Space wall cube
+	entities[3]->GetTransform()->SetPosition(+0.8f, -0.5f, 0.0f);
 	entities[3]->GetTransform()->SetScale(0.5f, 0.5f, 0.5f);
 
 	entities.push_back(std::make_shared<GameEntity>(meshes[2], materials[0])); // Red helix
@@ -254,7 +309,7 @@ void Game::CreateLights()
 	// Red directional
 	lights.push_back(Light{});
 	lights[1].Direction = XMFLOAT3(-1.0f, -0.3f, 1.0f);
-	lights[1].Color = XMFLOAT3(1.0f, 0.0f, 0.0f);
+	lights[1].Color = XMFLOAT3(1.0f, 1.0f, 1.0f);
 	lights[1].Intensity = 0.5f;
 
 	// Yellow directional
@@ -267,7 +322,7 @@ void Game::CreateLights()
 	lights.push_back(Light{});
 	lights[3].Type = 1;
 	lights[3].Position = XMFLOAT3(1.0f, 0.5f, -0.7f);
-	lights[3].Color = XMFLOAT3(0.0f, 0.0f, 1.0f);
+	lights[3].Color = XMFLOAT3(1.0f, 1.0f, 1.0f);
 	lights[3].Intensity = 1.0f;
 	lights[3].Range = 4.0f;
 
@@ -275,8 +330,8 @@ void Game::CreateLights()
 	lights.push_back(Light{});
 	lights[4].Type = 1;
 	lights[4].Position = XMFLOAT3(0.0f, 1.5f, 1.0f);
-	lights[4].Color = XMFLOAT3(0.5f, 1.0f, 0.0f);
-	lights[4].Intensity = 2.0f;
+	lights[4].Color = XMFLOAT3(0.0f, 0.5f, 0.0f);
+	lights[4].Intensity = 1.0f;
 	lights[4].Range = 6.0f;
 }
 

@@ -32,5 +32,6 @@ private:
 	std::shared_ptr<Mesh> mesh;
 	std::shared_ptr<Transform> transform;
 	std::shared_ptr<Material> material;
+
 	DirectX::XMFLOAT4 colorTint = { 1.0f, 1.0f, 1.0f, 1.0f };
 };

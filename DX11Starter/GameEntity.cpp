@@ -14,6 +14,10 @@ GameEntity::~GameEntity()
 
 }
 
+// ======================
+// GETTERS
+// ======================
+
 std::shared_ptr<Mesh> GameEntity::GetMesh()
 {
 	return mesh;
@@ -33,6 +37,10 @@ DirectX::XMFLOAT4 GameEntity::GetColorTint()
 {
 	return colorTint;
 }
+
+// ======================
+// SETTERS
+// ======================
 
 void GameEntity::SetMaterial(std::shared_ptr<Material> material)
 {
@@ -58,6 +66,9 @@ void GameEntity::Draw(
 	// Set shaders
 	material->GetVertexShader()->SetShader();
 	material->GetPixelShader()->SetShader();
+
+	// Prepare materials
+	material->PrepareMaterial();
 
 	// Set up data for vertex shader
 	std::shared_ptr<SimpleVertexShader> vs = material->GetVertexShader();
