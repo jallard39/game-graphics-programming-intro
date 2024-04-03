@@ -11,6 +11,7 @@
 #include "SimpleShader.h"
 #include "Material.h"
 #include "Lights.h"
+#include "Sky.h"
 
 class Game 
 	: public DXCore
@@ -42,6 +43,7 @@ private:
 	std::vector<Light> lights;
 	std::vector<std::shared_ptr<Camera>> cameras;
 	int activeCameraIndex = 0;
+	std::shared_ptr<Sky> sky;
 
 	// Initialization helper methods
 	void LoadShaders(); 
@@ -60,7 +62,11 @@ private:
 	// Shaders and shader-related constructs
 	std::shared_ptr<SimpleVertexShader> vertexShader;
 	std::shared_ptr<SimplePixelShader> pixelShader;
+	std::shared_ptr<SimpleVertexShader> VS_NormalMap;
+	std::shared_ptr<SimplePixelShader> PS_NormalMap;
+	std::shared_ptr<SimpleVertexShader> VS_Sky;
+	std::shared_ptr<SimplePixelShader> PS_Sky;
 	std::vector<std::shared_ptr<SimplePixelShader>> customShaders;
-	DirectX::XMFLOAT3 ambientColor = { 0.1f, 0.1f, 0.25f };
+	DirectX::XMFLOAT3 ambientColor = { 0.337f, 0.357f, 0.361f };
 };
 

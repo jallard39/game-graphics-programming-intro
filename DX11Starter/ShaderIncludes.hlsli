@@ -1,6 +1,14 @@
 #ifndef __GGP_SHADER_INCLUDES__
 #define __GGP_SHADER_INCLUDES__
 
+struct VertexShaderInput
+{
+    float3 localPosition : POSITION; // XYZ position
+    float3 normal : NORMAL;
+    float2 uv : TEXCOORD;
+    float3 tangent : TANGENT;
+};
+
 // Struct representing the data we expect to receive from earlier pipeline stages
 struct VertexToPixel
 {
@@ -8,6 +16,21 @@ struct VertexToPixel
     float2 uv : TEXCOORD;
     float3 normal : NORMAL;
     float3 worldPosition : POSITION;
+};
+
+struct VertexToPixel_NormalMap
+{
+    float4 screenPosition : SV_POSITION;
+    float2 uv : TEXCOORD;
+    float3 normal : NORMAL;
+    float3 worldPosition : POSITION;
+    float3 tangent : TANGENT;
+};
+
+struct VertexToPixel_Sky
+{
+    float4 position : SV_Position;
+    float3 sampleDir : DIRECTION;
 };
 
 #define LIGHT_TYPE_DIRECTIONAL	0
@@ -61,6 +84,7 @@ float3 DirectionalLight(float3 normal, Light light, float3 viewVector, float spe
     
     float3 diffuse = Lambert(normal, lightDir) * light.Color * light.Intensity * surfaceColor;
     float spec = Phong(normal, viewVector, lightDir, specularPower);
+    spec *= any(diffuse);
     
     return diffuse + spec.xxx;
 }
@@ -72,6 +96,7 @@ float3 PointLight(float3 normal, Light light, float3 viewVector, float specularP
     
     float3 diffuse = Lambert(normal, lightDir) * light.Color * light.Intensity * surfaceColor;
     float spec = Phong(normal, viewVector, lightDir, specularPower);
+    spec *= any(diffuse);
     
     return (diffuse + spec.xxx) * Attenuate(light, worldPos);
 

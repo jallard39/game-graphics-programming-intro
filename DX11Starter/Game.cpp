@@ -107,6 +107,10 @@ void Game::LoadShaders()
 {
 	vertexShader = std::make_shared<SimpleVertexShader>(device, context, FixPath(L"VertexShader.cso").c_str());
 	pixelShader = std::make_shared<SimplePixelShader>(device, context, FixPath(L"PixelShader.cso").c_str());
+	VS_NormalMap = std::make_shared<SimpleVertexShader>(device, context, FixPath(L"VertexShader_NormalMap.cso").c_str());
+	PS_NormalMap = std::make_shared<SimplePixelShader>(device, context, FixPath(L"PixelShader_NormalMap.cso").c_str());
+	VS_Sky = std::make_shared<SimpleVertexShader>(device, context, FixPath(L"SkyVertexShader.cso").c_str());
+	PS_Sky = std::make_shared<SimplePixelShader>(device, context, FixPath(L"SkyPixelShader.cso").c_str());
 	customShaders.push_back(std::make_shared<SimplePixelShader>(device, context, FixPath(L"CustomPS.cso").c_str()));
 }
 
@@ -212,6 +216,10 @@ void Game::LoadMaterials()
 	CreateWICTextureFromFile(device.Get(), context.Get(),
 		FixPath(L"../../Assets/Textures/FineClumpySand_2k/FineClumpySand_albedo.png").c_str(),
 		nullptr, srv1.GetAddressOf());
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv1Normal;
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		FixPath(L"../../Assets/Textures/FineClumpySand_2k/FineClumpySand_normal.png").c_str(),
+		nullptr, srv1Normal.GetAddressOf());
 
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv2;
 	CreateWICTextureFromFile(device.Get(), context.Get(),
@@ -221,6 +229,10 @@ void Game::LoadMaterials()
 	CreateWICTextureFromFile(device.Get(), context.Get(),
 		FixPath(L"../../Assets/Textures/SpaceLabWallOld_2k/SpaceLabWallOld_specular.png").c_str(),
 		nullptr, srv2Spec.GetAddressOf());
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv2Normal;
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		FixPath(L"../../Assets/Textures/SpaceLabWallOld_2k/SpaceLabWallOld_normal.png").c_str(),
+		nullptr, srv2Normal.GetAddressOf());
 
 	// Create sampling state
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler;
@@ -247,20 +259,33 @@ void Game::LoadMaterials()
 	}
 
 	// Create textured materials
-	materials.push_back(std::make_shared<Material>(1.0f, 1.0f, 1.0f, 1.0f, 0.0f, vertexShader, pixelShader)); // Fine Clumpy Sand
+	materials.push_back(std::make_shared<Material>(1.0f, 1.0f, 1.0f, 1.0f, 0.0f, VS_NormalMap, PS_NormalMap)); // Fine Clumpy Sand
 	materials[6]->AddTextureSRV("SurfaceTexture", srv1);
+	materials[6]->AddTextureSRV("NormalMap", srv1Normal);
 	materials[6]->AddSampler("BasicSampler", sampler);
 
-	materials.push_back(std::make_shared<Material>(1.0f, 1.0f, 1.0f, 1.0f, 0.0f, vertexShader, pixelShader)); // Space Lab Wall Old
+	materials.push_back(std::make_shared<Material>(1.0f, 1.0f, 1.0f, 1.0f, 0.0f, VS_NormalMap, PS_NormalMap)); // Space Lab Wall Old
 	materials[7]->AddTextureSRV("SurfaceTexture", srv2);
 	materials[7]->AddTextureSRV("SpecularMap", srv2Spec);
+	materials[7]->AddTextureSRV("NormalMap", srv2Normal);
 	materials[7]->AddSampler("BasicSampler", sampler);
 
-	materials.push_back(std::make_shared<Material>(1.0f, 1.0f, 1.0f, 1.0f, 0.0f, vertexShader, pixelShader)); // Space Lab Scaled
+	materials.push_back(std::make_shared<Material>(1.0f, 1.0f, 1.0f, 1.0f, 0.0f, VS_NormalMap, PS_NormalMap)); // Space Lab Scaled
 	materials[8]->AddTextureSRV("SurfaceTexture", srv2);
 	materials[8]->AddTextureSRV("SpecularMap", srv2Spec);
+	materials[8]->AddTextureSRV("NormalMap", srv2Normal);
 	materials[8]->AddSampler("BasicSampler", sampler);
 	materials[8]->SetUVScale(10.0f, 5.0f);
+
+	// Create sky box
+	sky = std::make_shared<Sky>(meshes[0], sampler, device, context, VS_Sky, PS_Sky,
+		FixPath(L"../../Assets/Textures/Skies/Cold Sunset/right.png").c_str(),
+		FixPath(L"../../Assets/Textures/Skies/Cold Sunset/left.png").c_str(),
+		FixPath(L"../../Assets/Textures/Skies/Cold Sunset/up.png").c_str(),
+		FixPath(L"../../Assets/Textures/Skies/Cold Sunset/down.png").c_str(),
+		FixPath(L"../../Assets/Textures/Skies/Cold Sunset/front.png").c_str(),
+		FixPath(L"../../Assets/Textures/Skies/Cold Sunset/back.png").c_str()
+		);
 }
 
 
@@ -268,7 +293,7 @@ void Game::LoadMaterials()
 // Creates the GameEntities that will be drawn to the screen
 // --------------------------------------------------------
 void Game::CreateEntities() 
-{
+{	
 	entities.push_back(std::make_shared<GameEntity>(meshes[1], materials[6])); // Sand cylinder
 	entities[0]->GetTransform()->SetPosition(3.5f, 0.5f, 1.0f);
 	entities[0]->GetTransform()->SetScale(0.5f, 0.7f, 1.0f);
@@ -292,6 +317,12 @@ void Game::CreateEntities()
 	entities.push_back(std::make_shared<GameEntity>(meshes[5], materials[5])); // Rainbow sphere
 	entities[5]->GetTransform()->SetPosition(-1.5f, 0.0f, -1.0f);
 	entities[5]->GetTransform()->SetScale(0.5f, 0.5f, 0.5f);
+
+	/*
+	entities.push_back(std::make_shared<GameEntity>(meshes[0], materials[1])); // Cube duplicate (for shader testing)
+	entities[6]->GetTransform()->SetPosition(+0.8f, -0.5f, -1.5f);
+	entities[6]->GetTransform()->SetScale(0.5f, 0.5f, 0.5f);
+	*/
 }
 
 
@@ -300,39 +331,17 @@ void Game::CreateEntities()
 // --------------------------------------------------------
 void Game::CreateLights()
 {
-	// White directional
+	// Main directional
 	lights.push_back(Light{});
-	lights[0].Direction = XMFLOAT3(1.0f, -1.0f, 0.0f);
+	lights[0].Direction = XMFLOAT3(0.0f, -2.0f, -1.0f);
 	lights[0].Color = XMFLOAT3(1.0f, 1.0f, 1.0f);
 	lights[0].Intensity = 1.0f;
 
-	// Red directional
+	// Added directional
 	lights.push_back(Light{});
-	lights[1].Direction = XMFLOAT3(-1.0f, -0.3f, 1.0f);
+	lights[1].Direction = XMFLOAT3(0.0f, -1.0f, 0.3f);
 	lights[1].Color = XMFLOAT3(1.0f, 1.0f, 1.0f);
 	lights[1].Intensity = 0.5f;
-
-	// Yellow directional
-	lights.push_back(Light{});
-	lights[2].Direction = XMFLOAT3(-0.2f, -0.8f, -2.0f);
-	lights[2].Color = XMFLOAT3(1.0f, 1.0f, 0.0f);
-	lights[2].Intensity = 1.0f;
-
-	// Blue point
-	lights.push_back(Light{});
-	lights[3].Type = 1;
-	lights[3].Position = XMFLOAT3(1.0f, 0.5f, -0.7f);
-	lights[3].Color = XMFLOAT3(1.0f, 1.0f, 1.0f);
-	lights[3].Intensity = 1.0f;
-	lights[3].Range = 4.0f;
-
-	// Green point
-	lights.push_back(Light{});
-	lights[4].Type = 1;
-	lights[4].Position = XMFLOAT3(0.0f, 1.5f, 1.0f);
-	lights[4].Color = XMFLOAT3(0.0f, 0.5f, 0.0f);
-	lights[4].Intensity = 1.0f;
-	lights[4].Range = 6.0f;
 }
 
 
@@ -676,6 +685,8 @@ void Game::Update(float deltaTime, float totalTime)
 	entities[2]->GetTransform()->Rotate(0.0f, 0.0f, -1.0f * deltaTime);
 	entities[3]->GetTransform()->MoveAbsolute(0.0003f*sinf(totalTime), 0.0f, 0.0f);
 	entities[3]->GetTransform()->Rotate(0.2f * deltaTime, 0.7f * deltaTime, 0.0f);
+	//entities[6]->GetTransform()->MoveAbsolute(0.0003f * sinf(totalTime), 0.0f, 0.0f);
+	//entities[6]->GetTransform()->Rotate(0.2f * deltaTime, 0.7f * deltaTime, 0.0f);
 	entities[4]->GetTransform()->Scale(1.0f + 0.0001f * sinf(0.7f*totalTime),  1.0f + 0.0001f * sinf(0.7f*totalTime), 1.0f);
 	if (((int)totalTime % 12) - 6 < 0)
 		entities[1]->GetTransform()->MoveAbsolute(0.02f * deltaTime, 0.04f * deltaTime, 0.0f);
@@ -718,6 +729,9 @@ void Game::Draw(float deltaTime, float totalTime)
 		entities[i]->GetMaterial()->GetPixelShader()->SetData("lights", &lights[0], sizeof(Light) * (int)lights.size());
 		entities[i]->Draw(context, cameras[activeCameraIndex], totalTime);
 	}
+
+	sky->Draw(cameras[activeCameraIndex]);
+
 
 	// ----------------------------------
 	// Frame END - happens once per frame after drawing everything

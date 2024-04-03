@@ -43,6 +43,7 @@ private:
 
 	Microsoft::WRL::ComPtr<ID3D11DeviceContext>	context;
 
+	void CalculateTangents(Vertex* verts, int numVerts, unsigned int* indices, int numIndices);
 	void CreateBuffers(
 		const void* vertices, 
 		int numVertices, 
