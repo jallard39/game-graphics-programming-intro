@@ -20,6 +20,9 @@ Mesh::Mesh(std::string name, const wchar_t* filename, Microsoft::WRL::ComPtr<ID3
 	name(name),
 	context(context)
 {
+	numVertices = 0;
+	numIndices = 0;
+
 	// ========================================
 	// Load vertices from OBJ file [[ NOT MY CODE ]]
 	// 

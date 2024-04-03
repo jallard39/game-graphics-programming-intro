@@ -318,11 +318,15 @@ void Game::CreateEntities()
 	entities[5]->GetTransform()->SetPosition(-1.5f, 0.0f, -1.0f);
 	entities[5]->GetTransform()->SetScale(0.5f, 0.5f, 0.5f);
 
-	/*
+	
 	entities.push_back(std::make_shared<GameEntity>(meshes[0], materials[1])); // Cube duplicate (for shader testing)
 	entities[6]->GetTransform()->SetPosition(+0.8f, -0.5f, -1.5f);
 	entities[6]->GetTransform()->SetScale(0.5f, 0.5f, 0.5f);
-	*/
+
+	entities.push_back(std::make_shared<GameEntity>(meshes[5], materials[1])); // Sand sphere duplicate (for shader testing)
+	entities[7]->GetTransform()->SetPosition(-0.7f, -0.2f, -1.5f);
+	entities[7]->GetTransform()->SetScale(0.5f, 0.5f, 0.5f);
+	
 }
 
 
@@ -685,8 +689,11 @@ void Game::Update(float deltaTime, float totalTime)
 	entities[2]->GetTransform()->Rotate(0.0f, 0.0f, -1.0f * deltaTime);
 	entities[3]->GetTransform()->MoveAbsolute(0.0003f*sinf(totalTime), 0.0f, 0.0f);
 	entities[3]->GetTransform()->Rotate(0.2f * deltaTime, 0.7f * deltaTime, 0.0f);
-	//entities[6]->GetTransform()->MoveAbsolute(0.0003f * sinf(totalTime), 0.0f, 0.0f);
-	//entities[6]->GetTransform()->Rotate(0.2f * deltaTime, 0.7f * deltaTime, 0.0f);
+
+	// cube duplicate (for testing purposes)
+	entities[6]->GetTransform()->MoveAbsolute(0.0003f * sinf(totalTime), 0.0f, 0.0f);
+	entities[6]->GetTransform()->Rotate(0.2f * deltaTime, 0.7f * deltaTime, 0.0f);
+
 	entities[4]->GetTransform()->Scale(1.0f + 0.0001f * sinf(0.7f*totalTime),  1.0f + 0.0001f * sinf(0.7f*totalTime), 1.0f);
 	if (((int)totalTime % 12) - 6 < 0)
 		entities[1]->GetTransform()->MoveAbsolute(0.02f * deltaTime, 0.04f * deltaTime, 0.0f);

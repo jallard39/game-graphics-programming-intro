@@ -47,7 +47,7 @@ float4 main(VertexToPixel_NormalMap input) : SV_TARGET
     // Calculate TBN rotation matrix
     float3 tangent = normalize(input.tangent - input.normal * dot(input.tangent, input.normal));
     float3 bitangent = cross(tangent, input.normal);
-    float3x3 TBN = float3x3(tangent, bitangent, input.normal);
+    float3x3 TBN = float3x3(input.tangent, bitangent, input.normal);
     input.normal = mul(unpackedNormal, TBN);
     
 
