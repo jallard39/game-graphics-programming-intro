@@ -212,27 +212,73 @@ void Game::LoadMaterials()
 		FixPath(L"../../Assets/Textures/Basic/Basic_albedo.png").c_str(),
 		nullptr, srvBasic.GetAddressOf());
 
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv1;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv1Albedo;
 	CreateWICTextureFromFile(device.Get(), context.Get(),
-		FixPath(L"../../Assets/Textures/FineClumpySand_2k/FineClumpySand_albedo.png").c_str(),
-		nullptr, srv1.GetAddressOf());
+		FixPath(L"../../Assets/Textures/Cobblestone/cobblestone_albedo.png").c_str(),
+		nullptr, srv1Albedo.GetAddressOf());
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv1Normal;
 	CreateWICTextureFromFile(device.Get(), context.Get(),
-		FixPath(L"../../Assets/Textures/FineClumpySand_2k/FineClumpySand_normal.png").c_str(),
+		FixPath(L"../../Assets/Textures/Cobblestone/cobblestone_normals.png").c_str(),
 		nullptr, srv1Normal.GetAddressOf());
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv1Roughness;
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		FixPath(L"../../Assets/Textures/Cobblestone/cobblestone_roughness.png").c_str(),
+		nullptr, srv1Roughness.GetAddressOf());
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv1Metal;
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		FixPath(L"../../Assets/Textures/Cobblestone/cobblestone_metal.png").c_str(),
+		nullptr, srv1Metal.GetAddressOf());
 
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv2;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv2Albedo;
 	CreateWICTextureFromFile(device.Get(), context.Get(),
-		FixPath(L"../../Assets/Textures/SpaceLabWallOld_2k/SpaceLabWallOld_albedo.png").c_str(),
-		nullptr, srv2.GetAddressOf());
-	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv2Spec;
-	CreateWICTextureFromFile(device.Get(), context.Get(),
-		FixPath(L"../../Assets/Textures/SpaceLabWallOld_2k/SpaceLabWallOld_specular.png").c_str(),
-		nullptr, srv2Spec.GetAddressOf());
+		FixPath(L"../../Assets/Textures/Bronze/bronze_albedo.png").c_str(),
+		nullptr, srv2Albedo.GetAddressOf());
 	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv2Normal;
 	CreateWICTextureFromFile(device.Get(), context.Get(),
-		FixPath(L"../../Assets/Textures/SpaceLabWallOld_2k/SpaceLabWallOld_normal.png").c_str(),
+		FixPath(L"../../Assets/Textures/Bronze/bronze_normals.png").c_str(),
 		nullptr, srv2Normal.GetAddressOf());
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv2Roughness;
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		FixPath(L"../../Assets/Textures/Bronze/bronze_roughness.png").c_str(),
+		nullptr, srv2Roughness.GetAddressOf());
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv2Metal;
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		FixPath(L"../../Assets/Textures/Bronze/bronze_metal.png").c_str(),
+		nullptr, srv2Metal.GetAddressOf());
+
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv3Albedo;
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		FixPath(L"../../Assets/Textures/Wood/wood_albedo.png").c_str(),
+		nullptr, srv3Albedo.GetAddressOf());
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv3Normal;
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		FixPath(L"../../Assets/Textures/Wood/wood_normals.png").c_str(),
+		nullptr, srv3Normal.GetAddressOf());
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv3Roughness;
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		FixPath(L"../../Assets/Textures/Wood/wood_roughness.png").c_str(),
+		nullptr, srv3Roughness.GetAddressOf());
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv3Metal;
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		FixPath(L"../../Assets/Textures/Wood/wood_metal.png").c_str(),
+		nullptr, srv3Metal.GetAddressOf());
+
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv4Albedo;
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		FixPath(L"../../Assets/Textures/Scratched/scratched_albedo.png").c_str(),
+		nullptr, srv4Albedo.GetAddressOf());
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv4Normal;
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		FixPath(L"../../Assets/Textures/Scratched/scratched_normals.png").c_str(),
+		nullptr, srv4Normal.GetAddressOf());
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv4Roughness;
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		FixPath(L"../../Assets/Textures/Scratched/scratched_roughness.png").c_str(),
+		nullptr, srv4Roughness.GetAddressOf());
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srv4Metal;
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		FixPath(L"../../Assets/Textures/Scratched/scratched_metal.png").c_str(),
+		nullptr, srv4Metal.GetAddressOf());
 
 	// Create sampling state
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> sampler;
@@ -254,28 +300,39 @@ void Game::LoadMaterials()
 	materials.push_back(std::make_shared<Material>(0.169f, 0.51f, 0.161f, 1.0f, 0.9f, vertexShader, pixelShader)); // Green
 	materials.push_back(std::make_shared<Material>(0.145f, 0.878f, 0.365f, 1.0f, 0.9f, vertexShader, customShaders[0])); // Rainbow
 	for (int i = 0; i < 6; i++) {
-		materials[i]->AddTextureSRV("SurfaceTexture", srvBasic);
+		materials[i]->AddTextureSRV("Albedo", srvBasic);
+		materials[i]->AddTextureSRV("RoughnessMap", srvBasic);
 		materials[i]->AddSampler("BasicSampler", sampler);
 	}
 
 	// Create textured materials
-	materials.push_back(std::make_shared<Material>(1.0f, 1.0f, 1.0f, 1.0f, 0.0f, VS_NormalMap, PS_NormalMap)); // Fine Clumpy Sand
-	materials[6]->AddTextureSRV("SurfaceTexture", srv1);
+	materials.push_back(std::make_shared<Material>(1.0f, 1.0f, 1.0f, 1.0f, 0.0f, VS_NormalMap, PS_NormalMap)); // Cobblestone
+	materials[6]->AddTextureSRV("Albedo", srv1Albedo);
 	materials[6]->AddTextureSRV("NormalMap", srv1Normal);
+	materials[6]->AddTextureSRV("RoughnessMap", srv1Roughness);
+	materials[6]->AddTextureSRV("MetalnessMap", srv1Metal);
 	materials[6]->AddSampler("BasicSampler", sampler);
 
-	materials.push_back(std::make_shared<Material>(1.0f, 1.0f, 1.0f, 1.0f, 0.0f, VS_NormalMap, PS_NormalMap)); // Space Lab Wall Old
-	materials[7]->AddTextureSRV("SurfaceTexture", srv2);
-	materials[7]->AddTextureSRV("SpecularMap", srv2Spec);
+	materials.push_back(std::make_shared<Material>(1.0f, 1.0f, 1.0f, 1.0f, 0.0f, VS_NormalMap, PS_NormalMap)); // Bronze
+	materials[7]->AddTextureSRV("Albedo", srv2Albedo);
 	materials[7]->AddTextureSRV("NormalMap", srv2Normal);
+	materials[7]->AddTextureSRV("RoughnessMap", srv2Normal);
+	materials[7]->AddTextureSRV("MetalnessMap", srv2Metal);
 	materials[7]->AddSampler("BasicSampler", sampler);
 
-	materials.push_back(std::make_shared<Material>(1.0f, 1.0f, 1.0f, 1.0f, 0.0f, VS_NormalMap, PS_NormalMap)); // Space Lab Scaled
-	materials[8]->AddTextureSRV("SurfaceTexture", srv2);
-	materials[8]->AddTextureSRV("SpecularMap", srv2Spec);
-	materials[8]->AddTextureSRV("NormalMap", srv2Normal);
+	materials.push_back(std::make_shared<Material>(1.0f, 1.0f, 1.0f, 1.0f, 0.0f, VS_NormalMap, PS_NormalMap)); // Bronze
+	materials[8]->AddTextureSRV("Albedo", srv3Albedo);
+	materials[8]->AddTextureSRV("NormalMap", srv3Normal);
+	materials[8]->AddTextureSRV("RoughnessMap", srv3Normal);
+	materials[8]->AddTextureSRV("MetalnessMap", srv3Metal);
 	materials[8]->AddSampler("BasicSampler", sampler);
-	materials[8]->SetUVScale(10.0f, 5.0f);
+
+	materials.push_back(std::make_shared<Material>(1.0f, 1.0f, 1.0f, 1.0f, 0.0f, VS_NormalMap, PS_NormalMap)); // Bronze
+	materials[9]->AddTextureSRV("Albedo", srv4Albedo);
+	materials[9]->AddTextureSRV("NormalMap", srv4Normal);
+	materials[9]->AddTextureSRV("RoughnessMap", srv4Normal);
+	materials[9]->AddTextureSRV("MetalnessMap", srv4Metal);
+	materials[9]->AddSampler("BasicSampler", sampler);
 
 	// Create sky box
 	sky = std::make_shared<Sky>(meshes[0], sampler, device, context, VS_Sky, PS_Sky,
@@ -298,15 +355,15 @@ void Game::CreateEntities()
 	entities[0]->GetTransform()->SetPosition(3.5f, 0.5f, 1.0f);
 	entities[0]->GetTransform()->SetScale(0.5f, 0.7f, 1.0f);
 
-	entities.push_back(std::make_shared<GameEntity>(meshes[5], materials[6])); // Sand sphere
+	entities.push_back(std::make_shared<GameEntity>(meshes[5], materials[9])); // Sand sphere
 	entities[1]->GetTransform()->SetPosition(-0.7f, -0.2f, 0.0f);
 	entities[1]->GetTransform()->SetScale(0.5f, 0.5f, 0.5f);
 
-	entities.push_back(std::make_shared<GameEntity>(meshes[6], materials[8])); // Space wall torus
+	entities.push_back(std::make_shared<GameEntity>(meshes[6], materials[7])); // Space wall torus
 	entities[2]->GetTransform()->SetPosition(-1.0f, +1.0f, 0.0f);
 	entities[2]->GetTransform()->SetScale(0.5f, 0.5f, 0.5f);
 
-	entities.push_back(std::make_shared<GameEntity>(meshes[0], materials[7])); // Space wall cube
+	entities.push_back(std::make_shared<GameEntity>(meshes[0], materials[8])); // Space wall cube
 	entities[3]->GetTransform()->SetPosition(+0.8f, -0.5f, 0.0f);
 	entities[3]->GetTransform()->SetScale(0.5f, 0.5f, 0.5f);
 
@@ -318,7 +375,7 @@ void Game::CreateEntities()
 	entities[5]->GetTransform()->SetPosition(-1.5f, 0.0f, -1.0f);
 	entities[5]->GetTransform()->SetScale(0.5f, 0.5f, 0.5f);
 
-	
+	/*
 	entities.push_back(std::make_shared<GameEntity>(meshes[0], materials[1])); // Cube duplicate (for shader testing)
 	entities[6]->GetTransform()->SetPosition(+0.8f, -0.5f, -1.5f);
 	entities[6]->GetTransform()->SetScale(0.5f, 0.5f, 0.5f);
@@ -326,7 +383,7 @@ void Game::CreateEntities()
 	entities.push_back(std::make_shared<GameEntity>(meshes[5], materials[1])); // Sand sphere duplicate (for shader testing)
 	entities[7]->GetTransform()->SetPosition(-0.7f, -0.2f, -1.5f);
 	entities[7]->GetTransform()->SetScale(0.5f, 0.5f, 0.5f);
-	
+	*/
 }
 
 
@@ -345,7 +402,13 @@ void Game::CreateLights()
 	lights.push_back(Light{});
 	lights[1].Direction = XMFLOAT3(0.0f, -1.0f, 0.3f);
 	lights[1].Color = XMFLOAT3(1.0f, 1.0f, 1.0f);
-	lights[1].Intensity = 0.5f;
+	lights[1].Intensity = 1.0f;
+
+	// Added directional
+	lights.push_back(Light{});
+	lights[2].Direction = XMFLOAT3(1.0f, 1.0f, 2.3f);
+	lights[2].Color = XMFLOAT3(1.0f, 1.0f, 1.0f);
+	lights[2].Intensity = 1.0f;
 }
 
 
@@ -691,8 +754,8 @@ void Game::Update(float deltaTime, float totalTime)
 	entities[3]->GetTransform()->Rotate(0.2f * deltaTime, 0.7f * deltaTime, 0.0f);
 
 	// cube duplicate (for testing purposes)
-	entities[6]->GetTransform()->MoveAbsolute(0.0003f * sinf(totalTime), 0.0f, 0.0f);
-	entities[6]->GetTransform()->Rotate(0.2f * deltaTime, 0.7f * deltaTime, 0.0f);
+	//entities[6]->GetTransform()->MoveAbsolute(0.0003f * sinf(totalTime), 0.0f, 0.0f);
+	//entities[6]->GetTransform()->Rotate(0.2f * deltaTime, 0.7f * deltaTime, 0.0f);
 
 	entities[4]->GetTransform()->Scale(1.0f + 0.0001f * sinf(0.7f*totalTime),  1.0f + 0.0001f * sinf(0.7f*totalTime), 1.0f);
 	if (((int)totalTime % 12) - 6 < 0)

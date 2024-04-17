@@ -1,8 +1,9 @@
 #include "ShaderIncludes.hlsli"
 
-Texture2D SurfaceTexture : register(t0);
-Texture2D SpecularMap : register(t1);
-Texture2D NormalMap : register(t2);
+Texture2D Albedo : register(t0);
+Texture2D NormalMap : register(t1);
+Texture2D RoughnessMap : register(t2);
+Texture2D MetalnessMap : register(t3);
 
 SamplerState BasicSampler : register(s0);
 
@@ -33,9 +34,14 @@ float4 main(VertexToPixel_NormalMap input) : SV_TARGET
     float2 uv = input.uv + uvOffset;
     uv = float2(uv.x * uvScale.x, uv.y * uvScale.y);
     
-    // Sample texture
-    float4 surfaceColor = SurfaceTexture.Sample(BasicSampler, uv) * colorTint;
-    float specMapValue = SpecularMap.Sample(BasicSampler, uv).b;
+    // Sample textures
+    float4 surfaceColor = Albedo.Sample(BasicSampler, uv) * colorTint;
+    surfaceColor = float4(pow(surfaceColor.rgb, 2.2f), 1.0f);
+    
+    float roughness = RoughnessMap.Sample(BasicSampler, uv).r;
+    float metalness = MetalnessMap.Sample(BasicSampler, uv).r;
+    
+    float3 specularColor = lerp(F0_NON_METAL, surfaceColor.rgb, metalness);
     
     
     // ====== Normals ======
@@ -54,20 +60,18 @@ float4 main(VertexToPixel_NormalMap input) : SV_TARGET
     // ====== Lighting ======
 
     // Ambient, specular, direction -  same for all
-    float4 ambientTerm = float4(ambient.rgb, 1.0f);
     float3 v = normalize(cameraPosition - input.worldPosition);
-    float specExponent = (1.0f - roughness) * specMapValue * MAX_SPECULAR_EXPONENT;
     
     // Calculate total lighting
     float3 totalLight = float3(0.0f, 0.0f, 0.0f);
     for (int i = 0; i < numLights; i++)
     {
         if (lights[i].Type == 0)
-            totalLight += DirectionalLight(input.normal, lights[i], v, specExponent, surfaceColor.rgb);
+            totalLight += DirectionalLight(input.normal, lights[i], v, roughness, surfaceColor.rgb, specularColor, metalness);
         else if (lights[i].Type == 1)
-            totalLight += PointLight(input.normal, lights[i], v, specExponent, surfaceColor.rgb, input.worldPosition);
+            totalLight += PointLight(input.normal, lights[i], v, roughness, surfaceColor.rgb, specularColor, input.worldPosition, metalness);
     }
     
     //return float4(input.normal, 1.0f);
-    return (surfaceColor * ambientTerm) + float4(totalLight, 1.0f);
+    return float4(pow(totalLight, 1.0f / 2.2f), 1.0f);
 }
