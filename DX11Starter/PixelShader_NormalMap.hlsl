@@ -47,7 +47,7 @@ float4 main(VertexToPixel_NormalMap input) : SV_TARGET
     // ====== Normals ======
     
     // Unpack normals
-    float3 unpackedNormal = NormalMap.Sample(BasicSampler, uv).rbg * 2 - 1;
+    float3 unpackedNormal = NormalMap.Sample(BasicSampler, uv).rgb * 2 - 1;
     unpackedNormal = normalize(unpackedNormal);
     
     // Calculate TBN rotation matrix
