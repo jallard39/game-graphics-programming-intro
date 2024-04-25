@@ -5,7 +5,10 @@ Texture2D NormalMap : register(t1);
 Texture2D RoughnessMap : register(t2);
 Texture2D MetalnessMap : register(t3);
 
+Texture2D ShadowMap : register(t4);                                                                                                                                                                                                         
+
 SamplerState BasicSampler : register(s0);
+SamplerComparisonState ShadowSampler : register(s1);
 
 // Struct representing data from a constant buffer
 cbuffer ExternalData : register(b0)
@@ -27,6 +30,21 @@ float4 main(VertexToPixel_NormalMap input) : SV_TARGET
 {
     input.normal = normalize(input.normal);
     input.tangent = normalize(input.tangent);
+    
+    // ====== Shadows ======
+    
+    // Perspective divide
+    input.shadowMapPos /= input.shadowMapPos.w;
+    
+    // Convert the normalized device coordinates to UVs for sampling
+    float2 shadowUV = input.shadowMapPos.xy * 0.5f + 0.5f;
+    shadowUV.y = 1 - shadowUV.y; // Flip the Y
+    
+    // Compare light-to-pixel distance and closest-surface distance
+    float distToLight = input.shadowMapPos.z;
+    float shadowAmount = ShadowMap.SampleCmpLevelZero(
+        ShadowSampler, shadowUV, distToLight).r;
+    
     
     // ====== Sampling ======
     
@@ -67,7 +85,12 @@ float4 main(VertexToPixel_NormalMap input) : SV_TARGET
     for (int i = 0; i < numLights; i++)
     {
         if (lights[i].Type == 0)
-            totalLight += DirectionalLight(input.normal, lights[i], v, roughness, surfaceColor.rgb, specularColor, metalness);
+        {
+            float3 lightResult = DirectionalLight(input.normal, lights[i], v, roughness, surfaceColor.rgb, specularColor, metalness);
+            if (i == 0)
+                lightResult *= shadowAmount;
+            totalLight += lightResult;
+        }
         else if (lights[i].Type == 1)
             totalLight += PointLight(input.normal, lights[i], v, roughness, surfaceColor.rgb, specularColor, input.worldPosition, metalness);
     }

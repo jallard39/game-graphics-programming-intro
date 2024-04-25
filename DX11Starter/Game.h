@@ -46,6 +46,7 @@ private:
 	std::shared_ptr<Sky> sky;
 
 	// Initialization helper methods
+	void InitShadows();
 	void LoadShaders(); 
 	void CreateGeometry();
 	void CreateEntities();
@@ -66,7 +67,20 @@ private:
 	std::shared_ptr<SimplePixelShader> PS_NormalMap;
 	std::shared_ptr<SimpleVertexShader> VS_Sky;
 	std::shared_ptr<SimplePixelShader> PS_Sky;
+	std::shared_ptr<SimpleVertexShader> VS_Shadow;
 	std::vector<std::shared_ptr<SimplePixelShader>> customShaders;
 	DirectX::XMFLOAT3 ambientColor = { 0.337f, 0.357f, 0.361f };
+
+	// Shadows and shadow-related constructs
+	int shadowMapResolution = 1024;	// Ideally a power of 2
+	Microsoft::WRL::ComPtr<ID3D11DepthStencilView> shadowDSV;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> shadowSRV;
+	Microsoft::WRL::ComPtr<ID3D11RasterizerState> shadowRasterizer;
+	Microsoft::WRL::ComPtr<ID3D11SamplerState> shadowSampler;
+	DirectX::XMFLOAT4X4 lightViewMatrix;
+	DirectX::XMFLOAT4X4 lightProjectionMatrix;
+
+	// Light matrix calculations
+	void UpdateLightViewMatrix(Light light);
 };
 

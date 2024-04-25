@@ -31,8 +31,9 @@ Camera::Camera(float aspectRatio, DirectX::XMFLOAT3 initPos, DirectX::XMFLOAT3 o
 	isOrthographic = false;
 
 	transform = std::make_shared<Transform>();
-	transform->SetPosition(initPos);
 	transform->SetRotation(orientation);
+	printf("%f %f %f", orientation.x, orientation.y, orientation.z);
+	transform->SetPosition(initPos);
 
 	UpdateViewMatrix();
 	UpdateProjectionMatrix(aspectRatio);
