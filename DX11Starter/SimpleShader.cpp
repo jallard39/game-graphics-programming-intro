@@ -460,7 +460,10 @@ bool ISimpleShader::SetData(std::string name, const void* data, unsigned int siz
 // --------------------------------------------------------
 bool ISimpleShader::SetInt(std::string name, int data)
 {
-	return this->SetData(name, (void*)(&data), sizeof(int));
+	//ReportWarnings = true;
+	bool output = this->SetData(name, (void*)(&data), sizeof(int));
+	//ReportWarnings = false;
+	return output;
 }
 
 // --------------------------------------------------------

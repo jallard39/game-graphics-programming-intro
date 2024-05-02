@@ -32,6 +32,7 @@ private:
 
 	// UI variables
 	float bgColor[4] = { 0.2f, 0.2f, 0.2f, 1.0f };
+	int blurRadius = 0;
 	bool showDemoUI = false;
 	bool thisBox = false;
 	bool thatBox = false;
@@ -47,6 +48,7 @@ private:
 
 	// Initialization helper methods
 	void InitShadows();
+	void InitPostProcessing();
 	void LoadShaders(); 
 	void CreateGeometry();
 	void CreateEntities();
@@ -79,6 +81,17 @@ private:
 	Microsoft::WRL::ComPtr<ID3D11SamplerState> shadowSampler;
 	DirectX::XMFLOAT4X4 lightViewMatrix;
 	DirectX::XMFLOAT4X4 lightProjectionMatrix;
+
+	// Post-processing effects
+	Microsoft::WRL::ComPtr<ID3D11SamplerState> ppSampler;
+	std::shared_ptr<SimpleVertexShader> ppVS;
+	std::shared_ptr<SimplePixelShader> ppPS;
+	Microsoft::WRL::ComPtr<ID3D11RenderTargetView> ppRTV;
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> ppSRV;
+	int isFog  = 0;
+	float startFog = 0.0f;
+	float fullFog = 15.0f;
+	DirectX::XMFLOAT3 fogColor = { 0.8f, 0.8f, 0.8f };
 
 	// Light matrix calculations
 	void UpdateLightViewMatrix(Light light);

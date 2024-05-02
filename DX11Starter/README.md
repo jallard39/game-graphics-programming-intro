@@ -1,2 +1,2 @@
 # DX11Starter
-Assignment #9: Added a UV scale and UV offset option to the material class. I also added a specular map, although I'm not entirely sure that I did it right. 
+Assignment #13: Added a distance-based fog effect, which can be turned on in the "Post-Processing" section of the UI. The user can modify the color and distance of the fog. 

@@ -12,7 +12,7 @@ Camera::Camera(float aspectRatio, DirectX::XMFLOAT3 initPos)
 
 	fov = (float)M_PI / 3;
 	nearClipDistance = 0.01f;
-	farClipDistance = 500.0f;
+	farClipDistance = 50.0f;
 	movementSpeed = 1.0f;
 	mouseLookSpeed = 0.002f;
 	isOrthographic = false;
@@ -25,14 +25,13 @@ Camera::Camera(float aspectRatio, DirectX::XMFLOAT3 initPos, DirectX::XMFLOAT3 o
 	fov(fov)
 {
 	nearClipDistance = 0.01f;
-	farClipDistance = 500.0f;
+	farClipDistance = 50.0f;
 	movementSpeed = 1.0f;
 	mouseLookSpeed = 0.002f;
 	isOrthographic = false;
 
 	transform = std::make_shared<Transform>();
 	transform->SetRotation(orientation);
-	printf("%f %f %f", orientation.x, orientation.y, orientation.z);
 	transform->SetPosition(initPos);
 
 	UpdateViewMatrix();
@@ -146,4 +145,8 @@ std::shared_ptr<Transform> Camera::GetTransform()
 
 float Camera::GetFOV() {
 	return fov;
+}
+
+float Camera::GetFarClipDistance() {
+	return farClipDistance;
 }

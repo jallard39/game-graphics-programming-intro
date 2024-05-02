@@ -176,37 +176,48 @@ float Attenuate(Light light, float3 worldPos)
     return att * att;
 }
 
+// Calculates total light given a diffuse value
+float3 SpecAndTotal(
+    float3 normal, 
+    float3 lightDir, 
+    float diffuse, 
+    float lightIntensity, 
+    float3 lightColor, 
+    float3 viewVector, 
+    float roughness, 
+    float3 surfaceColor, 
+    float3 specularColor, 
+    float metalness
+) {
+    float3 F;
+    float3 spec = MicrofacetBRDF(normal, lightDir, viewVector, roughness, specularColor, F);
+    
+    float3 balancedDiff = DiffuseEnergyConserve(float3(diffuse, diffuse, diffuse), F, metalness);
+    
+    float3 total = (balancedDiff * surfaceColor + spec) * lightIntensity * lightColor;
+    
+    return total;
+}
+
 // Complete lighting equation for directional lights
 float3 DirectionalLight(float3 normal, Light light, float3 viewVector, float roughness, float3 surfaceColor, float3 specularColor, float metalness)
 {
     float3 lightDir = -1 * normalize(light.Direction);
     
-    float3 diffuse = DiffusePBR(normal, lightDir);
-    float3 F;
-    float3 spec = MicrofacetBRDF(normal, lightDir, viewVector, roughness, specularColor, F);
+    float diffuse = DiffusePBR(normal, lightDir);
     
-    float3 balancedDiff = DiffuseEnergyConserve(diffuse, F, metalness);
-    
-    float3 total = (balancedDiff * surfaceColor + spec) * light.Intensity * light.Color;
-    
-    return total;
+    return SpecAndTotal(normal, lightDir, diffuse, light.Intensity, light.Color, viewVector, roughness, surfaceColor, specularColor, metalness);
 }
 
 // Complete lighting equation for point lights
 float3 PointLight(float3 normal, Light light, float3 viewVector, float roughness, float3 surfaceColor, float3 specularColor, float3 worldPos, float metalness)
 {
     float3 lightDir = normalize(light.Position - worldPos);
+    float diffuse = DiffusePBR(normal, lightDir);
     
-    float3 diffuse = DiffusePBR(normal, lightDir);
-    float3 F;
-    float3 spec = MicrofacetBRDF(normal, lightDir, viewVector, roughness, specularColor, F);
-    
-    float3 balancedDiff = DiffuseEnergyConserve(diffuse, F, metalness);
-    
-    float3 total = (balancedDiff * surfaceColor + spec) * light.Intensity * light.Color;
+    float3 total = SpecAndTotal(normal, lightDir, diffuse, light.Intensity, light.Color, viewVector, roughness, surfaceColor, specularColor, metalness);
     
     return total * Attenuate(light, worldPos);
-
 }
 
 #endif

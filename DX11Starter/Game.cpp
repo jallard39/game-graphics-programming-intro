@@ -70,10 +70,9 @@ Game::~Game()
 // --------------------------------------------------------
 void Game::Init()
 {
-	// Helper methods for loading shaders, creating some basic
-	// geometry to draw and some simple camera matrices.
-	//  - You'll be expanding and/or replacing these later
+	// Initialization helpers
 	InitShadows();
+	InitPostProcessing();
 	LoadShaders();
 	CreateGeometry();
 	LoadMaterials();
@@ -185,6 +184,39 @@ void Game::UpdateLightViewMatrix(Light light)
 }
 
 // --------------------------------------------------------
+// Set up resources required for post processing effects
+// --------------------------------------------------------
+void Game::InitPostProcessing()
+{
+	// Create the render target description
+	D3D11_TEXTURE2D_DESC textureDesc = {};
+	textureDesc.Width = windowWidth;
+	textureDesc.Height = windowHeight;
+	textureDesc.ArraySize = 1;
+	textureDesc.BindFlags = D3D11_BIND_RENDER_TARGET | D3D11_BIND_SHADER_RESOURCE;
+	textureDesc.CPUAccessFlags = 0;
+	textureDesc.Format = DXGI_FORMAT_R8G8B8A8_UNORM;
+	textureDesc.MipLevels = 1;
+	textureDesc.MiscFlags = 0;
+	textureDesc.SampleDesc.Count = 1;
+	textureDesc.SampleDesc.Quality = 0;
+	textureDesc.Usage = D3D11_USAGE_DEFAULT;
+
+	Microsoft::WRL::ComPtr<ID3D11Texture2D> ppTexture;
+	device->CreateTexture2D(&textureDesc, 0, ppTexture.GetAddressOf());
+
+	// Create the Render Target View
+	D3D11_RENDER_TARGET_VIEW_DESC rtvDesc = {};
+	rtvDesc.Format = textureDesc.Format;
+	rtvDesc.Texture2D.MipSlice = 0;
+	rtvDesc.ViewDimension = D3D11_RTV_DIMENSION_TEXTURE2D;
+	device->CreateRenderTargetView(ppTexture.Get(), &rtvDesc, ppRTV.ReleaseAndGetAddressOf());
+
+	// Create the Shader Resource View
+	device->CreateShaderResourceView(ppTexture.Get(), 0, ppSRV.ReleaseAndGetAddressOf());
+}
+
+// --------------------------------------------------------
 // Loads shaders from compiled shader object (.cso) files
 // and also created the Input Layout that describes our 
 // vertex data to the rendering pipeline. 
@@ -198,6 +230,8 @@ void Game::LoadShaders()
 	VS_Sky = std::make_shared<SimpleVertexShader>(device, context, FixPath(L"SkyVertexShader.cso").c_str());
 	PS_Sky = std::make_shared<SimplePixelShader>(device, context, FixPath(L"SkyPixelShader.cso").c_str());
 	VS_Shadow = std::make_shared<SimpleVertexShader>(device, context, FixPath(L"ShadowVertexShader.cso").c_str());
+	ppVS = std::make_shared<SimpleVertexShader>(device, context, FixPath(L"FullscreenVertexShader.cso").c_str());
+	ppPS = std::make_shared<SimplePixelShader>(device, context, FixPath(L"BlurPixelShader.cso").c_str());
 	customShaders.push_back(std::make_shared<SimplePixelShader>(device, context, FixPath(L"CustomPS.cso").c_str()));
 }
 
@@ -385,6 +419,11 @@ void Game::LoadMaterials()
 		FixPath(L"../../Assets/Textures/Rough/rough_metal.png").c_str(),
 		nullptr, srv5Metal.GetAddressOf());
 
+	Microsoft::WRL::ComPtr<ID3D11ShaderResourceView> srvRamp;
+	CreateWICTextureFromFile(device.Get(), context.Get(),
+		FixPath(L"../../Assets/Textures/ramp.png").c_str(),
+		nullptr, srvRamp.GetAddressOf());
+
 	#pragma endregion
 
 	// Create sampling state
@@ -444,6 +483,11 @@ void Game::LoadMaterials()
 	materials[6]->AddTextureSRV("MetalnessMap", srv5Metal);
 	materials[6]->AddSampler("BasicSampler", sampler);
 
+	// Add ramp for cel shading
+	for (int i = 0; i < materials.size(); i++) {
+		materials[i]->AddTextureSRV("Ramp", srvRamp);
+	}
+
 	// Create sky box
 	sky = std::make_shared<Sky>(meshes[0], sampler, device, context, VS_Sky, PS_Sky,
 		FixPath(L"../../Assets/Textures/Skies/Cold Sunset/right.png").c_str(),
@@ -489,6 +533,22 @@ void Game::CreateEntities()
 	entities[6]->GetTransform()->SetPosition(0.0f, -2.0f, +2.5f);
 	entities[6]->GetTransform()->SetScale(6.0f, 0.3f, 6.0f);
 
+	entities.push_back(std::make_shared<GameEntity>(meshes[1], materials[2])); // Distant pillar 1
+	entities[7]->GetTransform()->SetPosition(+1.5f, -0.5f, 3.0f);
+	entities[7]->GetTransform()->SetScale(0.5f, 3.0f, 0.5f);
+
+	entities.push_back(std::make_shared<GameEntity>(meshes[1], materials[2])); // Distant pillar 2
+	entities[8]->GetTransform()->SetPosition(+1.5f, -0.5f, 8.0f);
+	entities[8]->GetTransform()->SetScale(0.5f, 3.0f, 0.5f);
+
+	entities.push_back(std::make_shared<GameEntity>(meshes[1], materials[2])); // Distant pillar 3
+	entities[9]->GetTransform()->SetPosition(-1.5f, -0.5f, 5.0f);
+	entities[9]->GetTransform()->SetScale(0.5f, 3.0f, 0.5f);
+
+	entities.push_back(std::make_shared<GameEntity>(meshes[1], materials[2])); // Distant pillar 4
+	entities[10]->GetTransform()->SetPosition(-1.5f, -0.5f, 11.0f);
+	entities[10]->GetTransform()->SetScale(0.5f, 3.0f, 0.5f);
+
 	/*
 	entities.push_back(std::make_shared<GameEntity>(meshes[0], materials[1])); // Cube duplicate (for shader testing)
 	entities[6]->GetTransform()->SetPosition(+0.8f, -0.5f, -1.5f);
@@ -533,7 +593,7 @@ void Game::CreateLights()
 void Game::CreateCameras()
 {
 	// Initialize camera field
-	DirectX::XMFLOAT3 camInitPos = { 0.04f, 1.61f, -3.92f };
+	DirectX::XMFLOAT3 camInitPos = { 0.04f, 0.0f, -3.92f };
 	DirectX::XMFLOAT3 camInitRot = { 0.0f, 0.0f, -1.0f };
 	cameras.push_back(std::make_shared<Camera>((float)this->windowWidth / this->windowHeight, camInitPos, camInitRot, (float)XM_PI / 3));
 
@@ -780,6 +840,46 @@ void Game::BuildUI()
 		ImGui::TreePop();
 	}
 
+	// --------------------------------------------
+	// POST PROCESSING - blur and more
+	// --------------------------------------------
+
+	if (ImGui::TreeNode("Post-Processing"))
+	{
+		if (ImGui::TreeNode("Box Blur")) 
+		{
+			ImGui::SliderInt("Blur Radius ", &blurRadius, 0, 10);
+
+			ImGui::TreePop();
+		}
+
+		if (ImGui::TreeNode("Fog"))
+		{
+			// Turn on fog
+			bool fog = false;
+			if (isFog == 1) fog = true;
+			ImGui::Checkbox("Distance Fog", &fog);
+			if (fog) isFog = 1;
+			else isFog = 0;
+
+			// Fog settings
+			float color[3] = {
+					fogColor.x,
+					fogColor.y,
+					fogColor.z
+			};
+			ImGui::ColorEdit3("Color", color);
+			fogColor = DirectX::XMFLOAT3(color[0], color[1], color[2]);
+
+			ImGui::DragFloat("Start Distance", &startFog, 0.1f, 0.0f, 100.0f);
+			ImGui::DragFloat("Full Fog Distance", &fullFog, 0.1f, startFog, 100.0f);
+
+			ImGui::TreePop();
+		}
+
+		ImGui::TreePop();
+	}
+
 	#pragma region /* Extra UI Features from Assignment #2 */
 	/*
 	// --------------------------------------------
@@ -908,6 +1008,7 @@ void Game::Draw(float deltaTime, float totalTime)
 	{
 		// Clear the back buffer (erases what's on the screen)
 		context->ClearRenderTargetView(backBufferRTV.Get(), bgColor);
+		context->ClearRenderTargetView(ppRTV.Get(), bgColor);
 
 		// Clear the depth buffer (resets per-pixel occlusion information)
 		context->ClearDepthStencilView(depthBufferDSV.Get(), D3D11_CLEAR_DEPTH, 1.0f, 0);
@@ -932,6 +1033,7 @@ void Game::Draw(float deltaTime, float totalTime)
 	VS_Shadow->SetShader();
 	VS_Shadow->SetMatrix4x4("view", lightViewMatrix);
 	VS_Shadow->SetMatrix4x4("projection", lightProjectionMatrix);
+
 	// Loop and draw all entities
 	for (auto& e : entities)
 	{
@@ -944,10 +1046,7 @@ void Game::Draw(float deltaTime, float totalTime)
 	viewport.Height = (float)this->windowHeight;
 	context->RSSetViewports(1, &viewport);
 	context->RSSetState(0);
-	context->OMSetRenderTargets(
-		1,
-		backBufferRTV.GetAddressOf(),
-		depthBufferDSV.Get());
+	context->OMSetRenderTargets(1, ppRTV.GetAddressOf(), depthBufferDSV.Get());
 
 
 	// ----------------------------------
@@ -964,6 +1063,10 @@ void Game::Draw(float deltaTime, float totalTime)
 		entities[i]->GetMaterial()->GetPixelShader()->SetData("lights", &lights[0], sizeof(Light) * (int)lights.size());
 		entities[i]->GetMaterial()->GetPixelShader()->SetShaderResourceView("ShadowMap", shadowSRV);
 		entities[i]->GetMaterial()->GetPixelShader()->SetSamplerState("ShadowSampler", shadowSampler);
+		entities[i]->GetMaterial()->GetPixelShader()->SetInt("fog", isFog);
+		entities[i]->GetMaterial()->GetPixelShader()->SetFloat3("fogColor", fogColor);
+		entities[i]->GetMaterial()->GetPixelShader()->SetFloat("startFog", startFog);
+		entities[i]->GetMaterial()->GetPixelShader()->SetFloat("fullFog", fullFog);
 		entities[i]->Draw(context, cameras[activeCameraIndex], totalTime);
 	}
 
@@ -974,6 +1077,24 @@ void Game::Draw(float deltaTime, float totalTime)
 	// Frame END - happens once per frame after drawing everything
 	// ----------------------------------
 	{
+		// Restore back buffer
+		context->OMSetRenderTargets(1, backBufferRTV.GetAddressOf(), 0);
+
+		// Activate shaders 
+		ppVS->SetShader();
+		ppPS->SetShader();
+		ppPS->SetShaderResourceView("Pixels", ppSRV.Get());
+		ppPS->SetSamplerState("ClampSampler", ppSampler.Get());
+	
+		ppPS->SetInt("blurRadius", blurRadius);
+		ppPS->SetFloat("pixelWidth", 1.0f / windowWidth);
+		ppPS->SetFloat("pixelHeight", 1.0f / windowHeight);
+
+		ppPS->CopyAllBufferData();
+		
+
+		context->Draw(3, 0);
+
 		// Present the back buffer to the user
 		//  - Puts the results of what we've drawn onto the window
 		//  - Without this, the user never sees anything

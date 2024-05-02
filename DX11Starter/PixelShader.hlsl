@@ -4,7 +4,8 @@ Texture2D Albedo : register(t0);
 Texture2D RoughnessMap : register(t1);
 Texture2D MetalnessMap : register(t2);
 
-Texture2D ShadowMap : register(t43);
+Texture2D ShadowMap : register(t3);
+Texture2D Ramp : register(t4);
 
 SamplerState BasicSampler : register(s0);
 SamplerComparisonState ShadowSampler : register(s1);
@@ -20,6 +21,10 @@ cbuffer ExternalData : register(b0)
     float2 uvOffset;
     float2 uvScale;
     Light lights[5];
+    float3 fogColor;
+    float startFog;
+    float fullFog;
+    int fog;
 }
 
 // --------------------------------------------------------
@@ -78,6 +83,18 @@ float4 main(VertexToPixel input) : SV_TARGET
             totalLight += PointLight(input.normal, lights[i], v, roughness, surfaceColor.rgb, specularColor, input.worldPosition, metalness);
     }
     
-    //return float4(input.normal, 1.0f);
-    return float4(pow(totalLight, 1.0f / 2.2f), 1.0f);
+    float4 pixelColor = float4(pow(totalLight, 1.0f / 2.2f), 1.0f);
+    
+    if (fog == 1)
+    {
+        float dist = length(cameraPosition - input.worldPosition);
+        float fogAmt = smoothstep(startFog, fullFog, dist);
+        float3 finalColor = lerp(pixelColor.rgb, fogColor, fogAmt);
+        return float4(finalColor, 1.0f);
+
+    }
+    else
+    {
+        return pixelColor;
+    }
 }

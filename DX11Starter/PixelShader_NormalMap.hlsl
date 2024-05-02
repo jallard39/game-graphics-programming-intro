@@ -5,7 +5,8 @@ Texture2D NormalMap : register(t1);
 Texture2D RoughnessMap : register(t2);
 Texture2D MetalnessMap : register(t3);
 
-Texture2D ShadowMap : register(t4);                                                                                                                                                                                                         
+Texture2D ShadowMap : register(t4); 
+Texture2D Ramp : register(t5);
 
 SamplerState BasicSampler : register(s0);
 SamplerComparisonState ShadowSampler : register(s1);
@@ -21,6 +22,11 @@ cbuffer ExternalData : register(b0)
     float2 uvOffset;
     float2 uvScale;
     Light lights[5];
+    float3 fogColor;
+    float startFog;
+    float fullFog;
+    int fog;
+    //int cel;
 }
 
 // --------------------------------------------------------
@@ -84,6 +90,18 @@ float4 main(VertexToPixel_NormalMap input) : SV_TARGET
     float3 totalLight = float3(0.0f, 0.0f, 0.0f);
     for (int i = 0; i < numLights; i++)
     {
+        /*
+            if (cel == 1)
+        {
+            float3 lightDir = -1 * normalize(lights[i].Direction);
+            float diffuse = DiffusePBR(input.normal, lightDir);
+            float2 rampUV = float2(diffuse, 0.5);
+            float celDiffuse = Ramp.Sample(BasicSampler, rampUV).r;
+            float3 lightResult = celDiffuse * surfaceColor.rgb * lights[i].Intensity;
+            if (i == 0)
+                lightResult *= shadowAmount;
+            totalLight += lightResult;
+        } */
         if (lights[i].Type == 0)
         {
             float3 lightResult = DirectionalLight(input.normal, lights[i], v, roughness, surfaceColor.rgb, specularColor, metalness);
@@ -92,9 +110,23 @@ float4 main(VertexToPixel_NormalMap input) : SV_TARGET
             totalLight += lightResult;
         }
         else if (lights[i].Type == 1)
+        {
             totalLight += PointLight(input.normal, lights[i], v, roughness, surfaceColor.rgb, specularColor, input.worldPosition, metalness);
+        }    
     }
     
-    //return float4(input.normal, 1.0f);
-    return float4(pow(totalLight, 1.0f / 2.2f), 1.0f);
+    float4 pixelColor = float4(pow(totalLight, 1.0f / 2.2f), 1.0f);
+    
+    if (fog == 1)
+    {
+        float dist = length(cameraPosition - input.worldPosition);
+        float fogAmt = smoothstep(startFog, fullFog, dist);
+        float3 finalColor = lerp(pixelColor.rgb, fogColor, fogAmt);
+        return float4(finalColor, 1.0f);
+
+    }
+    else
+    {
+        return pixelColor;
+    }
 }
